@@ -1,0 +1,43 @@
+/* src/pages/admin/Assinantes.module.css */
+.page { max-width: 900px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; gap: 20px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+.busca {
+  padding: 10px 16px; border: 1.5px solid var(--border); border-radius: 99px;
+  font-size: 14px; font-family: var(--font-sans); outline: none; min-width: 240px;
+  transition: border-color var(--transition);
+}
+.busca:focus { border-color: var(--brand); }
+
+.tabela { display: flex; flex-direction: column; gap: 8px; }
+.thead {
+  display: grid; grid-template-columns: 2fr 2fr 1fr 1fr;
+  padding: 0 24px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-3); font-weight: 600;
+}
+
+.row {
+  display: grid; grid-template-columns: 2fr 2fr 1fr 1fr;
+  align-items: center; padding: 16px 24px;
+}
+
+.cliente { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 36px; height: 36px; background: var(--brand-light);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; color: var(--brand-dark); flex-shrink: 0;
+}
+.nome { font-weight: 600; font-size: 14px; }
+.cidade { font-size: 12px; color: var(--text-3); }
+
+.contato { display: flex; flex-direction: column; gap: 2px; }
+.email { font-size: 13px; }
+.tel { font-size: 12px; color: var(--text-3); }
+
+.proxima { font-size: 14px; font-weight: 500; }
+
+@media (max-width: 700px) {
+  .thead { display: none; }
+  .row { grid-template-columns: 1fr; gap: 8px; }
+}

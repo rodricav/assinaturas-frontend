@@ -1,0 +1,40 @@
+/* src/pages/admin/Produtos.module.css */
+.page { max-width: 960px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+
+.card { padding: 0; overflow: hidden; }
+.cardImg {
+  height: 140px; background: var(--brand-pale);
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
+}
+.cardImg img { width: 100%; height: 100%; object-fit: cover; }
+.cardBody { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.cardTop { display: flex; justify-content: space-between; align-items: flex-start; }
+.prodNome { font-weight: 600; font-size: 14px; }
+.prodPreco { font-size: 18px; font-weight: 700; color: var(--brand-dark); }
+
+.estoque { display: flex; align-items: center; gap: 8px; }
+.estoqueNum { font-size: 20px; font-weight: 700; }
+.estoqueLabel { font-size: 12px; color: var(--text-3); }
+
+.cardActions { display: flex; gap: 8px; margin-top: 4px; }
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.checkLabel { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); }
+.checkLabel input { accent-color: var(--brand); }
+.modalActions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+.estoqueAtual { font-size: 14px; color: var(--text-2); padding: 10px 14px; background: var(--bg); border-radius: var(--radius); }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.fieldLabel { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.select {
+  padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius);
+  font-size: 14px; font-family: var(--font-sans); color: var(--text); background: var(--surface); outline: none;
+}
+.select:focus { border-color: var(--brand); }

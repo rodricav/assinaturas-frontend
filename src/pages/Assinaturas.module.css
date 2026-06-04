@@ -1,0 +1,42 @@
+/* src/pages/Assinaturas.module.css */
+.page { max-width: 800px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.lista { display: flex; flex-direction: column; gap: 16px; }
+.card { display: flex; flex-direction: column; gap: 16px; }
+
+.cardHeader { display: flex; justify-content: space-between; align-items: flex-start; }
+.cardTopo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.planoNome { font-family: var(--font-serif); font-size: 20px; }
+.cardSub { font-size: 13px; color: var(--text-3); }
+.actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.itens { display: flex; flex-direction: column; gap: 8px; }
+.item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--bg); border-radius: var(--radius);
+}
+.itemEmoji { font-size: 18px; }
+.itemNome { flex: 1; font-size: 14px; font-weight: 500; }
+.itemQtd { font-size: 13px; color: var(--text-3); }
+.itemPreco { font-size: 14px; font-weight: 600; color: var(--brand-dark); }
+
+.cardFooter {
+  display: flex; gap: 20px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.footerInfo { display: flex; flex-direction: column; gap: 2px; }
+.footerLabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+.footerVal { font-size: 15px; font-weight: 600; }
+
+.modalContent { display: flex; flex-direction: column; gap: 16px; }
+.modalContent p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+.motivoInput {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: var(--font-sans); font-size: 14px;
+  resize: vertical; outline: none; transition: border-color var(--transition);
+}
+.motivoInput:focus { border-color: var(--brand); }
+.modalActions { display: flex; gap: 10px; justify-content: flex-end; }

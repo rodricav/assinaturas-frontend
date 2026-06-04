@@ -1,0 +1,23 @@
+/* src/pages/admin/Zonas.module.css */
+.page { max-width: 800px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.lista { display: flex; flex-direction: column; gap: 12px; }
+.card { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.cardLeft { flex: 1; }
+.cardTop { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.zonaNome { font-weight: 600; font-size: 16px; }
+.cepRange { display: flex; align-items: center; gap: 10px; }
+.cep { font-family: 'Courier New', monospace; font-size: 15px; color: var(--brand-dark); font-weight: 600; }
+.cepSep { color: var(--text-3); }
+.cardRight { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.statVal { font-size: 18px; font-weight: 700; }
+.statLabel { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.actions { display: flex; gap: 8px; }
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modalActions { display: flex; gap: 8px; justify-content: flex-end; }

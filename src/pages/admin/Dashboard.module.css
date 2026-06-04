@@ -1,0 +1,18 @@
+/* src/pages/admin/Dashboard.module.css */
+.page { max-width: 900px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-top: 16px; }
+
+.statCard { text-align: center; padding: 28px 16px; }
+.statIcon { font-size: 32px; margin-bottom: 12px; }
+.statNum { font-family: var(--font-serif); font-size: 40px; margin-bottom: 6px; }
+.statLabel { font-size: 13px; color: var(--text-3); }
+
+.card_green  { border-top: 3px solid #22c55e; }
+.card_yellow { border-top: 3px solid #eab308; }
+.card_blue   { border-top: 3px solid #3b82f6; }
+.card_orange { border-top: 3px solid #f97316; }
+.card_red    { border-top: 3px solid var(--danger); }

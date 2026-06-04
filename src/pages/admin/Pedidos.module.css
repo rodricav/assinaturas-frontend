@@ -1,0 +1,43 @@
+/* src/pages/admin/Pedidos.module.css */
+.page { max-width: 900px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.filtroBtn {
+  padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text-2);
+  transition: all var(--transition);
+}
+.filtroBtn:hover { border-color: var(--brand); color: var(--brand); }
+.filtroAtivo { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+.lista { display: flex; flex-direction: column; gap: 12px; }
+.card { display: flex; flex-direction: column; gap: 12px; }
+
+.cardTop { display: flex; justify-content: space-between; align-items: center; }
+.cardId { display: flex; align-items: center; gap: 10px; }
+.numPedido { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 700; color: var(--brand-dark); }
+.ciclo { font-size: 12px; color: var(--text-3); background: var(--bg); padding: 2px 8px; border-radius: 99px; }
+
+.cardInfo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.infoItem { display: flex; flex-direction: column; gap: 3px; }
+.infoLabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+.infoVal { font-size: 14px; font-weight: 500; }
+
+.cardActions { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+.modalContent { display: flex; flex-direction: column; gap: 14px; }
+.modalContent p { font-size: 14px; color: var(--text-2); }
+.obsInput {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: var(--font-sans); font-size: 14px;
+  resize: vertical; outline: none;
+}
+.obsInput:focus { border-color: var(--brand); }
+.modalActions { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (max-width: 600px) {
+  .cardInfo { grid-template-columns: 1fr 1fr; }
+}
