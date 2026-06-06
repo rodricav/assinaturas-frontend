@@ -1,7 +1,7 @@
 // src/pages/Catalogo.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProdutos, getPlanos as getPlanosFallback } from '../services/api';
+import { getProdutos } from '../services/api';
 import api from '../services/api';
 import { Button, Card, Badge, Spinner, EmptyState } from '../components/ui';
 import styles from './Catalogo.module.css';
@@ -9,53 +9,33 @@ import styles from './Catalogo.module.css';
 export default function Catalogo() {
   const [produtos, setProdutos]   = useState([]);
   const [planos, setPlanos]       = useState([]);
-  const [carrinho, setCarrinho]   = useState({}); // { produto_id: quantidade }
+  const [carrinho, setCarrinho]   = useState({});
   const [planoSel, setPlanoSel]   = useState('');
   const [dataInicio, setData]     = useState('');
   const [loading, setLoading]     = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    Promise.all([
-      getProdutos(),
-      api.get('/admin/zonas'), // reutiliza para buscar planos via fallback
-    ]).catch(() => {}).finally(() => {});
-
-    getProdutos().then(r => setProdutos(r.data)).catch(() => {});
-
-    // Busca planos direto
-    api.get('/planos').catch(() =>
-      // fallback manual com os planos padrão
-      ({ data: [
-        { id: '', nome: 'Quinzenal — 15 dias', intervalo_dias: 15, desconto_pct: 0 },
-        { id: '', nome: 'Mensal — 30 dias',    intervalo_dias: 30, desconto_pct: 5 },
-      ]})
-    ).then(r => {
-      setPlanos(r.data);
-      if (r.data.length) setPlanoSel(r.data[0].id);
-    }).finally(() => setLoading(false));
-
-    // data padrão = amanhã
     const amanha = new Date();
     amanha.setDate(amanha.getDate() + 1);
     setData(amanha.toISOString().split('T')[0]);
-  }, []);
 
-  // Busca planos de verdade
-  useEffect(() => {
-    api.get('/admin/dashboard').then(() => {
-      // admin autenticado — busca planos reais via query direta
-    }).catch(() => {});
-
-    // Tenta rota pública de planos
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/planos`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.length) { setPlanos(data); setPlanoSel(data[0].id); } })
-      .catch(() => {});
+    Promise.all([
+      getProdutos(),
+      api.get('/planos'),
+    ]).then(([rProd, rPlanos]) => {
+      setProdutos(rProd.data);
+      setPlanos(rPlanos.data);
+      if (rPlanos.data.length) setPlanoSel(rPlanos.data[0].id);
+    }).finally(() => setLoading(false));
   }, []);
 
   const add    = (id) => setCarrinho(c => ({ ...c, [id]: (c[id] || 0) + 1 }));
-  const remove = (id) => setCarrinho(c => { const n = { ...c }; if (n[id] > 1) n[id]--; else delete n[id]; return n; });
+  const remove = (id) => setCarrinho(c => {
+    const n = { ...c };
+    if (n[id] > 1) n[id]--; else delete n[id];
+    return n;
+  });
 
   const totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
   const totalValor = Object.entries(carrinho).reduce((acc, [id, qtd]) => {
@@ -66,7 +46,7 @@ export default function Catalogo() {
   const planoAtual = planos.find(p => p.id === planoSel);
   const desconto   = planoAtual ? totalValor * (parseFloat(planoAtual.desconto_pct) / 100) : 0;
 
-  function irParaAssinatura() {
+  function irParaConfirmacao() {
     const itens = Object.entries(carrinho).map(([produto_id, quantidade]) => ({ produto_id, quantidade }));
     navigate('/assinar', { state: { plano_id: planoSel, data_inicio: dataInicio, itens } });
   }
@@ -83,7 +63,6 @@ export default function Catalogo() {
       </div>
 
       <div className={styles.layout}>
-        {/* Produtos */}
         <div className={styles.grid}>
           {produtos.length === 0 && (
             <EmptyState icon="🌿" title="Nenhum produto disponível" desc="Em breve novos itens serão adicionados." />
@@ -91,10 +70,7 @@ export default function Catalogo() {
           {produtos.map(p => (
             <Card key={p.id} className={styles.prodCard}>
               <div className={styles.prodImg}>
-                {p.foto_url
-                  ? <img src={p.foto_url} alt={p.nome} />
-                  : <span className={styles.prodEmoji}>🛒</span>
-                }
+                {p.foto_url ? <img src={p.foto_url} alt={p.nome} /> : <span className={styles.prodEmoji}>🛒</span>}
               </div>
               <div className={styles.prodInfo}>
                 <h3 className={styles.prodNome}>{p.nome}</h3>
@@ -119,7 +95,6 @@ export default function Catalogo() {
           ))}
         </div>
 
-        {/* Painel lateral */}
         <div className={styles.aside}>
           <Card className={styles.asideCard}>
             <h3 className={styles.asideTitle}>Sua assinatura</h3>
@@ -128,15 +103,11 @@ export default function Catalogo() {
               <label className={styles.asideLabel}>Periodicidade</label>
               <div className={styles.planos}>
                 {planos.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPlanoSel(p.id)}
+                  <button key={p.id} onClick={() => setPlanoSel(p.id)}
                     className={`${styles.planoBtn} ${planoSel === p.id ? styles.planoBtnActive : ''}`}
                   >
-                    <span className={styles.planoNome}>{p.nome}</span>
-                    {parseFloat(p.desconto_pct) > 0 &&
-                      <Badge color="green">{p.desconto_pct}% off</Badge>
-                    }
+                    <span className={styles.planoNome}>{p.nome} — {p.intervalo_dias} dias</span>
+                    {parseFloat(p.desconto_pct) > 0 && <Badge color="green">{p.desconto_pct}% off</Badge>}
                   </button>
                 ))}
               </div>
@@ -174,9 +145,9 @@ export default function Catalogo() {
             <Button
               full size="lg"
               disabled={totalItens === 0 || !planoSel || !dataInicio}
-              onClick={irParaAssinatura}
+              onClick={irParaConfirmacao}
             >
-              {totalItens === 0 ? 'Adicione produtos' : `Assinar por R$ ${(totalValor - desconto).toFixed(2)}`}
+              {totalItens === 0 ? 'Adicione produtos' : `Revisar — R$ ${(totalValor - desconto).toFixed(2)}`}
             </Button>
 
             {totalItens === 0 && (
