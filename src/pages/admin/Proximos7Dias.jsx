@@ -181,13 +181,22 @@ export default function Proximos7Dias() {
                     ))}
                   </div>
 
-                  {/* Range de entrega */}
+                  {/* Número e range de entrega */}
                   <div className={styles.rangeEntrega}>
                     {p.numero_pedido && (
                       <span className={styles.numPedido}>{p.numero_pedido}</span>
                     )}
-                    {p.data_entrega_minima && p.data_entrega_maxima ? (
-                      <span>📅 Entrega entre <strong>{new Date(p.data_entrega_minima + 'T12:00:00').toLocaleDateString('pt-BR')}</strong> e <strong>{new Date(p.data_entrega_maxima + 'T12:00:00').toLocaleDateString('pt-BR')}</strong></span>
+                    {(p.data_entrega_minima || p.data_entrega_maxima) ? (
+                      <span>
+                        📅 Entrega entre{' '}
+                        <strong>
+                          {new Date(p.data_entrega_minima).toLocaleDateString('pt-BR')}
+                        </strong>
+                        {' '}e{' '}
+                        <strong>
+                          {new Date(p.data_entrega_maxima).toLocaleDateString('pt-BR')}
+                        </strong>
+                      </span>
                     ) : p.data_prevista ? (
                       <span>📅 Entrega prevista: <strong>{new Date(p.data_prevista).toLocaleDateString('pt-BR')}</strong></span>
                     ) : null}
