@@ -89,7 +89,7 @@
 
   /* Compensa a topbar: brand ~42px + nav ~54px = ~96px + margem */
   .main {
-    margin-top: 96px;
+    margin-top: 116px;
     padding: 16px;
     flex: 1;
     min-width: 0;
