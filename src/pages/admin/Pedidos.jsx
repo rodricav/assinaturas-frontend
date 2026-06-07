@@ -86,7 +86,7 @@ export default function Pedidos() {
             <Card key={p.id} className={styles.card}>
               <div className={styles.cardTop}>
                 <div className={styles.cardId}>
-                  <span className={styles.numPedido}>#{p.id.slice(0,8).toUpperCase()}</span>
+                  <span className={styles.numPedido}>#{p.numero_pedido || p.id.slice(0,8).toUpperCase()}</span>
                   <span className={styles.ciclo}>Ciclo {p.numero_ciclo}</span>
                 </div>
                 <Badge color={est.color}>{est.label}</Badge>

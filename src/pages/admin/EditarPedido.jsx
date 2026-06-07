@@ -83,7 +83,7 @@ export default function EditarPedido() {
 
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Editar pedido #{id.slice(0,8).toUpperCase()}</h1>
+          <h1 className={styles.title}>Editar pedido #{(pedido?.numero_pedido || id.slice(0,8).toUpperCase())}</h1>
           <p className={styles.subtitle}>{pedido.cliente_nome} — {pedido.cliente_email}</p>
         </div>
         <Badge color={pedido.status === 'confirmado' ? 'blue' : pedido.status === 'aguardando_pagamento' ? 'yellow' : 'gray'}>

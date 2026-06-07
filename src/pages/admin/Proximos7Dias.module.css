@@ -34,3 +34,14 @@
 }
 
 .vazio { text-align: center; padding: 40px; color: var(--text-3); }
+
+.rangeEntrega {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 13px; color: var(--text-2);
+  padding: 8px 12px; background: var(--brand-pale); border-radius: var(--radius);
+}
+.numPedido {
+  font-family: 'Courier New', monospace; font-weight: 700;
+  color: var(--brand-dark); font-size: 13px;
+  background: var(--brand-light); padding: 2px 8px; border-radius: 4px;
+}

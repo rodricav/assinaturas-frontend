@@ -87,7 +87,7 @@ export default function MeusPedidos() {
                 {/* Cabeçalho clicável */}
                 <div className={styles.cardHeader} onClick={() => setExpandido(aberto ? null : pedido.id)}>
                   <div className={styles.cardLeft}>
-                    <span className={styles.numPedido}>#{pedido.id.slice(0,8).toUpperCase()}</span>
+                    <span className={styles.numPedido}>#{pedido.numero_pedido || pedido.id.slice(0,8).toUpperCase()}</span>
                     <Badge color={cfg.color}>{cfg.icon} {cfg.label}</Badge>
                   </div>
                   <div className={styles.cardRight}>
