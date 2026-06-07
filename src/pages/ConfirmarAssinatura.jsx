@@ -71,7 +71,7 @@ export default function ConfirmarAssinatura() {
           <h2 className={styles.sucessoTitulo}>Assinatura confirmada!</h2>
           <p className={styles.sucessoDesc}>
             Sua primeira entrega está prevista para <strong>{dataFormatada}</strong>.<br />
-            Você receberá uma confirmação pelo WhatsApp.
+            Você receberá uma confirmação pelo e-mail.
           </p>
           <div className={styles.sucessoActions}>
             <Button onClick={() => navigate('/assinaturas')} size="lg">
