@@ -6,15 +6,25 @@ import styles from './Proximos7Dias.module.css';
 
 function gerarPDF(pedidos) {
   const linhas = pedidos.map(p => {
-    const dataFormatada = p.data_prevista
-      ? new Date(p.data_prevista).toLocaleDateString('pt-BR')
-      : p.proxima_geracao
-        ? new Date(p.proxima_geracao).toLocaleDateString('pt-BR')
-        : '—';
+    // Range de datas de entrega
+    let rangeEntrega = '';
+    if (p.data_entrega_minima && p.data_entrega_maxima) {
+      const dMin = new Date(p.data_entrega_minima).toLocaleDateString('pt-BR');
+      const dMax = new Date(p.data_entrega_maxima).toLocaleDateString('pt-BR');
+      rangeEntrega = `Entre ${dMin} e ${dMax}`;
+    } else if (p.data_prevista) {
+      rangeEntrega = new Date(p.data_prevista).toLocaleDateString('pt-BR');
+    } else if (p.proxima_geracao) {
+      rangeEntrega = new Date(p.proxima_geracao).toLocaleDateString('pt-BR');
+    }
 
     const tipoLabel = p.tipo === 'estimativa'
       ? '<span style="background:#fff8e6;color:#b45309;padding:2px 8px;border-radius:4px;font-size:11px">ESTIMATIVA</span>'
       : '<span style="background:#e8f5ee;color:#1a6b3c;padding:2px 8px;border-radius:4px;font-size:11px">PEDIDO REAL</span>';
+
+    const numPedido = p.numero_pedido
+      ? `<span style="font-family:monospace;font-weight:700;color:#1a6b3c;font-size:13px;background:#e8f5ee;padding:2px 8px;border-radius:4px">${p.numero_pedido}</span>`
+      : '';
 
     const itens = (p.itens || []).map(i =>
       `<tr>
@@ -28,16 +38,17 @@ function gerarPDF(pedidos) {
       <div style="page-break-inside:avoid;margin-bottom:20px;border:1px solid #e0e0e0;border-radius:8px;padding:16px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
           <div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
               <strong style="font-size:15px">${p.cliente_nome}</strong>
               ${tipoLabel}
+              ${numPedido}
             </div>
             <div style="color:#666;font-size:12px">${p.cliente_email}</div>
             <div style="color:#666;font-size:12px;margin-top:2px">${p.endereco || ''}, ${p.numero || ''}${p.complemento ? ' ' + p.complemento : ''} — ${p.bairro || ''}, ${p.cidade || ''}/${p.estado || ''}</div>
           </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="color:#1a6b3c;font-weight:600">📅 ${dataFormatada}</div>
-            ${p.total ? `<div style="color:#666;font-size:12px">Total: R$ ${parseFloat(p.total).toFixed(2)}</div>` : ''}
+          <div style="text-align:right;flex-shrink:0;min-width:160px">
+            <div style="color:#1a6b3c;font-weight:600;font-size:14px">📅 ${rangeEntrega}</div>
+            ${p.total ? `<div style="color:#666;font-size:12px;margin-top:4px">Total: R$ ${parseFloat(p.total).toFixed(2)}</div>` : ''}
           </div>
         </div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
