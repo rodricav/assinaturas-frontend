@@ -1,5 +1,6 @@
 // src/pages/admin/Pedidos.jsx
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getPedidos, avancarEstagio } from '../../services/api';
 import { Card, Badge, Button, Spinner, Alert, Modal } from '../../components/ui';
 import styles from './Pedidos.module.css';
@@ -28,6 +29,7 @@ export default function Pedidos() {
   const [obs, setObs]           = useState('');
   const [acao, setAcao]         = useState(false);
   const [erro, setErro]         = useState('');
+  const navigate = useNavigate();
 
   async function carregar() {
     try {
@@ -76,8 +78,10 @@ export default function Pedidos() {
 
       <div className={styles.lista}>
         {pedidos.map(p => {
-          const est = ESTAGIOS[p.status] || ESTAGIOS.cancelado;
+          const est    = ESTAGIOS[p.status] || ESTAGIOS.cancelado;
           const proximo = est.proximo;
+          const podeEditar = ['aguardando_pagamento', 'confirmado'].includes(p.status);
+
           return (
             <Card key={p.id} className={styles.card}>
               <div className={styles.cardTop}>
@@ -87,6 +91,7 @@ export default function Pedidos() {
                 </div>
                 <Badge color={est.color}>{est.label}</Badge>
               </div>
+
               <div className={styles.cardInfo}>
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Cliente</span>
@@ -99,7 +104,9 @@ export default function Pedidos() {
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Entrega prevista</span>
                   <span className={styles.infoVal}>
-                    {p.data_entrega_prevista ? new Date(p.data_entrega_prevista).toLocaleDateString('pt-BR') : '—'}
+                    {p.data_entrega_prevista
+                      ? new Date(p.data_entrega_prevista).toLocaleDateString('pt-BR')
+                      : '—'}
                   </span>
                 </div>
                 <div className={styles.infoItem}>
@@ -107,16 +114,29 @@ export default function Pedidos() {
                   <span className={styles.infoVal}>{new Date(p.gerado_em).toLocaleDateString('pt-BR')}</span>
                 </div>
               </div>
-              {proximo && (
-                <div className={styles.cardActions}>
+
+              {/* Observação do admin */}
+              {p.observacao_admin && (
+                <div className={styles.obsAdmin}>📋 {p.observacao_admin}</div>
+              )}
+
+              <div className={styles.cardActions}>
+                {podeEditar && (
+                  <Button size="sm" variant="ghost" onClick={() => navigate(`/painel/pedidos/${p.id}/editar`)}>
+                    ✏️ Editar
+                  </Button>
+                )}
+                {proximo && (
                   <Button size="sm" onClick={() => setModal({ pedidoId: p.id, novoEstagio: proximo })}>
                     {PROXIMO_LABEL[proximo]} →
                   </Button>
+                )}
+                {proximo && proximo !== 'entregue' && (
                   <Button size="sm" variant="danger" onClick={() => setModal({ pedidoId: p.id, novoEstagio: 'cancelado' })}>
                     Cancelar
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </Card>
           );
         })}

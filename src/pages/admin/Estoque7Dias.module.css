@@ -1,0 +1,32 @@
+/* src/pages/admin/Estoque7Dias.module.css */
+.page { max-width: 900px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.secao { margin-bottom: 24px; }
+.secHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.secIcon { font-size: 20px; }
+.secTitle { font-size: 16px; font-weight: 600; }
+.secCard { padding: 0; overflow: hidden; }
+
+.linha {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+}
+.linha:last-child { border-bottom: none; }
+.linhaCritica { background: #fef2f2; }
+.linhaAtencao { background: #fffbeb; }
+
+.prodInfo { flex: 1; }
+.prodNome { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
+.datas { font-size: 12px; color: var(--text-3); }
+
+.numeros { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.num { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 48px; }
+.numVal { font-size: 20px; font-weight: 700; line-height: 1; }
+.numLabel { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.seta { color: var(--text-3); font-size: 16px; }
+.verde { color: #16a34a; }
+.amarelo { color: #d97706; }
+.vermelho { color: #dc2626; }

@@ -41,3 +41,9 @@
 @media (max-width: 600px) {
   .cardInfo { grid-template-columns: 1fr 1fr; }
 }
+
+.obsAdmin {
+  font-size: 12px; color: var(--text-2);
+  background: var(--accent-warm); padding: 8px 12px;
+  border-radius: var(--radius); font-style: italic;
+}

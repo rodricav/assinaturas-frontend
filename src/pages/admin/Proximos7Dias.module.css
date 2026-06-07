@@ -1,0 +1,31 @@
+/* src/pages/admin/Proximos7Dias.module.css */
+.page { max-width: 900px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.grupo { margin-bottom: 28px; }
+.dataHeader {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--brand-light);
+}
+.dataLabel { font-weight: 600; font-size: 15px; color: var(--brand-dark); text-transform: capitalize; }
+
+.cards { display: flex; flex-direction: column; gap: 10px; }
+.card { display: flex; flex-direction: column; gap: 12px; }
+
+.cardHeader { display: flex; justify-content: space-between; align-items: flex-start; }
+.clienteNome { font-weight: 600; font-size: 15px; }
+.clienteEmail { font-size: 13px; color: var(--text-3); }
+.clienteEnd { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+
+.itens { display: flex; flex-direction: column; gap: 6px; }
+.item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: var(--bg); border-radius: var(--radius);
+}
+.itemNome { flex: 1; font-size: 13px; font-weight: 500; }
+.itemQtd { font-size: 13px; font-weight: 700; color: var(--brand-dark); }
+
+.vazio { text-align: center; padding: 40px; color: var(--text-3); }

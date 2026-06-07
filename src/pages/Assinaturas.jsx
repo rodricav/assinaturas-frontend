@@ -1,8 +1,8 @@
 // src/pages/Assinaturas.jsx
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMinhasAssinaturas, pausarAssinatura, reativarAssinatura, cancelarAssinatura } from '../services/api';
 import { Button, Card, Badge, Spinner, EmptyState, Modal, Alert } from '../components/ui';
-import { useNavigate } from 'react-router-dom';
 import styles from './Assinaturas.module.css';
 
 const STATUS_BADGE = {
@@ -11,20 +11,11 @@ const STATUS_BADGE = {
   cancelada: { color: 'gray',   label: 'Cancelada' },
 };
 
-const ESTAGIO_BADGE = {
-  aguardando_pagamento: { color: 'yellow', label: 'Aguardando pagamento' },
-  confirmado:           { color: 'blue',   label: 'Confirmado' },
-  em_separacao:         { color: 'blue',   label: 'Em separação' },
-  saiu_para_entrega:    { color: 'orange', label: 'Saiu para entrega' },
-  entregue:             { color: 'green',  label: 'Entregue' },
-  cancelado:            { color: 'red',    label: 'Cancelado' },
-};
-
 export default function Assinaturas() {
   const [assinaturas, setAssinaturas] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [erro, setErro]               = useState('');
-  const [modal, setModal]             = useState(null); // { tipo, id }
+  const [modal, setModal]             = useState(null);
   const [motivo, setMotivo]           = useState('');
   const [acao, setAcao]               = useState(false);
   const navigate = useNavigate();
@@ -88,9 +79,26 @@ export default function Assinaturas() {
                     <p className={styles.cardSub}>A cada {a.intervalo_dias} dias</p>
                   </div>
                   <div className={styles.actions}>
-                    {a.status === 'ativa'   && <Button size="sm" variant="ghost" onClick={() => setModal({ tipo: 'pausar',   id: a.id })}>Pausar</Button>}
-                    {a.status === 'pausada' && <Button size="sm" variant="secondary" onClick={() => setModal({ tipo: 'reativar', id: a.id })}>Reativar</Button>}
-                    {a.status !== 'cancelada' && <Button size="sm" variant="danger" onClick={() => setModal({ tipo: 'cancelar', id: a.id })}>Cancelar</Button>}
+                    {a.status === 'ativa' && (
+                      <Button size="sm" variant="secondary" onClick={() => navigate(`/assinaturas/${a.id}/editar`)}>
+                        Alterar
+                      </Button>
+                    )}
+                    {a.status === 'ativa' && (
+                      <Button size="sm" variant="ghost" onClick={() => setModal({ tipo: 'pausar', id: a.id })}>
+                        Pausar
+                      </Button>
+                    )}
+                    {a.status === 'pausada' && (
+                      <Button size="sm" variant="secondary" onClick={() => setModal({ tipo: 'reativar', id: a.id })}>
+                        Reativar
+                      </Button>
+                    )}
+                    {a.status !== 'cancelada' && (
+                      <Button size="sm" variant="danger" onClick={() => setModal({ tipo: 'cancelar', id: a.id })}>
+                        Cancelar
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -124,7 +132,11 @@ export default function Assinaturas() {
       <Modal
         open={!!modal}
         onClose={() => setModal(null)}
-        title={modal?.tipo === 'pausar' ? 'Pausar assinatura' : modal?.tipo === 'reativar' ? 'Reativar assinatura' : 'Cancelar assinatura'}
+        title={
+          modal?.tipo === 'pausar'   ? 'Pausar assinatura'   :
+          modal?.tipo === 'reativar' ? 'Reativar assinatura' :
+          'Cancelar assinatura'
+        }
       >
         <div className={styles.modalContent}>
           {modal?.tipo === 'pausar'   && <p>Sua assinatura será pausada e nenhum pedido será gerado até você reativar.</p>}

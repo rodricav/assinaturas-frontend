@@ -8,14 +8,19 @@ import LoginAdmin          from './pages/LoginAdmin';
 import Catalogo            from './pages/Catalogo';
 import Assinaturas         from './pages/Assinaturas';
 import ConfirmarAssinatura from './pages/ConfirmarAssinatura';
+import MeusPedidos         from './pages/MeusPedidos';
+import EditarAssinatura    from './pages/EditarAssinatura';
 import ClienteLayout       from './components/ClienteLayout';
 import AdminLayout         from './components/AdminLayout';
 import Dashboard           from './pages/admin/Dashboard';
 import Pedidos             from './pages/admin/Pedidos';
+import EditarPedido        from './pages/admin/EditarPedido';
 import Produtos            from './pages/admin/Produtos';
 import Categorias          from './pages/admin/Categorias';
 import Zonas               from './pages/admin/Zonas';
 import Assinantes          from './pages/admin/Assinantes';
+import Proximos7Dias       from './pages/admin/Proximos7Dias';
+import Estoque7Dias        from './pages/admin/Estoque7Dias';
 
 function RotaCliente({ children }) {
   const { logado, isAdmin } = useAuth();
@@ -36,33 +41,31 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Login cliente */}
           <Route path="/login"       element={<Login />} />
-
-          {/* Login admin — rota independente, fora do layout admin */}
           <Route path="/admin/login" element={<LoginAdmin />} />
 
-          {/* Área do cliente */}
           <Route path="/" element={<RotaCliente><ClienteLayout /></RotaCliente>}>
-            <Route index              element={<Catalogo />} />
-            <Route path="assinaturas" element={<Assinaturas />} />
-            <Route path="assinar"     element={<ConfirmarAssinatura />} />
+            <Route index                     element={<Catalogo />} />
+            <Route path="assinaturas"        element={<Assinaturas />} />
+            <Route path="assinaturas/:id/editar" element={<EditarAssinatura />} />
+            <Route path="pedidos"            element={<MeusPedidos />} />
+            <Route path="assinar"            element={<ConfirmarAssinatura />} />
           </Route>
 
-          {/* Painel admin — prefixo /painel para evitar conflito com /admin/login */}
           <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
-            <Route index               element={<Dashboard />} />
-            <Route path="pedidos"      element={<Pedidos />} />
-            <Route path="produtos"     element={<Produtos />} />
-            <Route path="categorias"   element={<Categorias />} />
-            <Route path="zonas"        element={<Zonas />} />
-            <Route path="assinantes"   element={<Assinantes />} />
+            <Route index                     element={<Dashboard />} />
+            <Route path="pedidos"            element={<Pedidos />} />
+            <Route path="pedidos/:id/editar" element={<EditarPedido />} />
+            <Route path="proximos7dias"      element={<Proximos7Dias />} />
+            <Route path="estoque7dias"       element={<Estoque7Dias />} />
+            <Route path="produtos"           element={<Produtos />} />
+            <Route path="categorias"         element={<Categorias />} />
+            <Route path="zonas"              element={<Zonas />} />
+            <Route path="assinantes"         element={<Assinantes />} />
           </Route>
 
-          {/* Redireciona /admin para o login admin */}
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*"      element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
