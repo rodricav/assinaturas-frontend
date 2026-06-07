@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -20,8 +20,11 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
+  const isAdmin   = usuario?.papel === 'admin';
+  const isCliente = usuario?.papel === 'cliente';
+
   return (
-    <AuthContext.Provider value={{ usuario, entrar, sair, logado: !!usuario }}>
+    <AuthContext.Provider value={{ usuario, entrar, sair, logado: !!usuario, isAdmin, isCliente }}>
       {children}
     </AuthContext.Provider>
   );

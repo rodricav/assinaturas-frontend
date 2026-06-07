@@ -1,0 +1,44 @@
+/* src/pages/LoginAdmin.module.css */
+.page {
+  min-height: 100vh; background: #0f172a;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.card {
+  width: 100%; max-width: 400px;
+  background: #1e293b; border-radius: var(--radius-lg);
+  border: 1px solid #334155; padding: 40px;
+  animation: fadeUp 0.35s ease;
+}
+.iconWrap { font-size: 40px; margin-bottom: 16px; }
+.title { font-family: var(--font-serif); font-size: 26px; color: #f1f5f9; margin-bottom: 4px; }
+.subtitle { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+
+.tabs { display: flex; border-bottom: 1px solid #334155; margin-bottom: 20px; }
+.tab {
+  flex: 1; padding: 10px; background: none; border: none;
+  font-size: 14px; color: #64748b; font-weight: 500;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all var(--transition);
+}
+.tabActive { color: #90cdf4; border-bottom-color: #90cdf4; }
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+/* Override input colors para tema escuro */
+.form :global(.field label) { color: #94a3b8; }
+.form :global(input) {
+  background: #0f172a; border-color: #334155; color: #f1f5f9;
+}
+.form :global(input:focus) { border-color: #90cdf4; box-shadow: 0 0 0 3px rgba(144,205,244,0.1); }
+
+.voltarLink {
+  display: block; text-align: center; margin-top: 20px;
+  background: none; border: none; color: #64748b;
+  font-size: 13px; transition: color var(--transition);
+}
+.voltarLink:hover { color: #94a3b8; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

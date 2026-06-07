@@ -63,3 +63,13 @@ export const getAssinantes = ()         => api.get('/admin/assinantes');
 export const rodarScheduler = ()        => api.post('/admin/dev/rodar-scheduler');
 
 export default api;
+
+// ── Auth Admin ───────────────────────────────────────────────────────────────
+export const loginAdmin  = (data) => api.post('/auth/admin/login', data);
+export const criarAdmin  = (data) => api.post('/auth/admin/criar', data);
+export const getMeAdmin  = ()     => api.get('/auth/admin/me');
+
+// ── Categorias ───────────────────────────────────────────────────────────────
+export const getCategorias    = ()         => api.get('/categorias');
+export const criarCategoria   = (data)     => api.post('/categorias', data);
+export const editarCategoria  = (id, data) => api.patch(`/categorias/${id}`, data);

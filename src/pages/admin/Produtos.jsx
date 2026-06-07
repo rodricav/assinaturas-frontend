@@ -1,6 +1,6 @@
 // src/pages/admin/Produtos.jsx
 import { useState, useEffect } from 'react';
-import { getProdutosAdmin, criarProduto, editarProduto, ajustarEstoque } from '../../services/api';
+import { getProdutosAdmin, criarProduto, editarProduto, ajustarEstoque, getCategorias } from '../../services/api';
 import { Card, Button, Input, Badge, Spinner, Alert, Modal } from '../../components/ui';
 import styles from './Produtos.module.css';
 
@@ -11,8 +11,9 @@ export default function Produtos() {
   const [modal, setModal]       = useState(null); // 'criar' | 'estoque'
   const [sel, setSel]           = useState(null);
   const [salvando, setSalvando] = useState(false);
+  const [categorias, setCategorias] = useState([]);
 
-  const [form, setForm] = useState({ nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true });
+  const [form, setForm] = useState({ nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true, categoria_id: '' });
   const [estoqueQtd, setEstoqueQtd]   = useState('');
   const [estoqueObs, setEstoqueObs]   = useState('');
   const [estoqueMot, setEstoqueMot]   = useState('entrada_manual');
@@ -27,7 +28,7 @@ export default function Produtos() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); getCategorias().then(r => setCategorias(r.data)).catch(() => {}); }, []);
 
   function abrirCriar() {
     setForm({ nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true });
@@ -35,7 +36,7 @@ export default function Produtos() {
   }
 
   function abrirEditar(p) {
-    setForm({ nome: p.nome, descricao: p.descricao || '', preco: p.preco, foto_url: p.foto_url || '', ordem: p.ordem, ativo: p.ativo });
+    setForm({ nome: p.nome, descricao: p.descricao || '', preco: p.preco, foto_url: p.foto_url || '', ordem: p.ordem, ativo: p.ativo, categoria_id: p.categoria_id || '' });
     setSel(p); setModal('criar');
   }
 
@@ -116,6 +117,13 @@ export default function Produtos() {
             <Input label="Ordem de exibição" type="number" value={form.ordem} onChange={e => set('ordem', e.target.value)} />
           </div>
           <Input label="URL da foto" value={form.foto_url} onChange={e => set('foto_url', e.target.value)} placeholder="https://..." />
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Categoria</label>
+            <select className={styles.select} value={form.categoria_id} onChange={e => set('categoria_id', e.target.value || null)}>
+              <option value="">Sem categoria</option>
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>)}
+            </select>
+          </div>
           <label className={styles.checkLabel}>
             <input type="checkbox" checked={form.ativo} onChange={e => set('ativo', e.target.checked)} />
             Produto ativo no catálogo

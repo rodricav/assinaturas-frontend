@@ -1,0 +1,32 @@
+/* src/pages/admin/Categorias.module.css */
+.page { max-width: 800px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.lista { display: flex; flex-direction: column; gap: 10px; }
+.card { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 24px; }
+.cardLeft { display: flex; align-items: center; gap: 14px; }
+.icone { font-size: 32px; width: 48px; text-align: center; }
+.nome { font-weight: 600; font-size: 15px; }
+.desc { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.cardRight { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.ordem { font-size: 12px; color: var(--text-3); }
+.actions { display: flex; gap: 8px; }
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+.row2 { display: grid; grid-template-columns: 1.5fr 0.7fr; gap: 12px; }
+
+.emojiField { display: flex; flex-direction: column; gap: 8px; }
+.emojiLabel { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.emojiGrid { display: flex; flex-wrap: wrap; gap: 6px; }
+.emojiBtn {
+  width: 38px; height: 38px; border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 20px; transition: all var(--transition);
+  display: flex; align-items: center; justify-content: center;
+}
+.emojiBtn:hover { border-color: var(--brand); background: var(--brand-pale); }
+.emojiBtnAtivo { border-color: var(--brand); background: var(--brand-pale); box-shadow: 0 0 0 2px rgba(26,107,60,0.2); }
+.emojiSel { font-size: 13px; color: var(--text-3); }
+
+.modalActions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }

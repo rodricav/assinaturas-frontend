@@ -1,18 +1,20 @@
 // src/pages/Catalogo.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProdutos } from '../services/api';
+import { getProdutos, getCategorias } from '../services/api';
 import api from '../services/api';
 import { Button, Card, Badge, Spinner, EmptyState } from '../components/ui';
 import styles from './Catalogo.module.css';
 
 export default function Catalogo() {
-  const [produtos, setProdutos]   = useState([]);
-  const [planos, setPlanos]       = useState([]);
-  const [carrinho, setCarrinho]   = useState({});
-  const [planoSel, setPlanoSel]   = useState('');
-  const [dataInicio, setData]     = useState('');
-  const [loading, setLoading]     = useState(true);
+  const [produtos, setProdutos]       = useState([]);
+  const [categorias, setCategorias]   = useState([]);
+  const [planos, setPlanos]           = useState([]);
+  const [carrinho, setCarrinho]       = useState({});
+  const [planoSel, setPlanoSel]       = useState('');
+  const [dataInicio, setData]         = useState('');
+  const [categoriaFiltro, setFiltro]  = useState('todas');
+  const [loading, setLoading]         = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,9 +24,11 @@ export default function Catalogo() {
 
     Promise.all([
       getProdutos(),
+      getCategorias(),
       api.get('/planos'),
-    ]).then(([rProd, rPlanos]) => {
+    ]).then(([rProd, rCat, rPlanos]) => {
       setProdutos(rProd.data);
+      setCategorias(rCat.data);
       setPlanos(rPlanos.data);
       if (rPlanos.data.length) setPlanoSel(rPlanos.data[0].id);
     }).finally(() => setLoading(false));
@@ -37,12 +41,29 @@ export default function Catalogo() {
     return n;
   });
 
+  // Filtra e agrupa por categoria
+  const produtosFiltrados = categoriaFiltro === 'todas'
+    ? produtos
+    : produtos.filter(p => p.categoria_id === categoriaFiltro);
+
+  // Agrupa por categoria para exibição
+  const grupos = categoriaFiltro === 'todas'
+    ? categorias.reduce((acc, cat) => {
+        const itens = produtos.filter(p => p.categoria_id === cat.id);
+        if (itens.length) acc.push({ ...cat, produtos: itens });
+        return acc;
+      }, []).concat(
+        produtos.filter(p => !p.categoria_id).length
+          ? [{ id: 'sem-categoria', nome: 'Outros', icone: '📦', produtos: produtos.filter(p => !p.categoria_id) }]
+          : []
+      )
+    : [{ id: categoriaFiltro, produtos: produtosFiltrados }];
+
   const totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
   const totalValor = Object.entries(carrinho).reduce((acc, [id, qtd]) => {
     const p = produtos.find(x => x.id === id);
     return acc + (p ? parseFloat(p.preco) * qtd : 0);
   }, 0);
-
   const planoAtual = planos.find(p => p.id === planoSel);
   const desconto   = planoAtual ? totalValor * (parseFloat(planoAtual.desconto_pct) / 100) : 0;
 
@@ -62,39 +83,73 @@ export default function Catalogo() {
         </div>
       </div>
 
+      {/* Filtro por categoria */}
+      {categorias.length > 0 && (
+        <div className={styles.filtros}>
+          <button
+            className={`${styles.filtroBtn} ${categoriaFiltro === 'todas' ? styles.filtroAtivo : ''}`}
+            onClick={() => setFiltro('todas')}
+          >
+            Todos
+          </button>
+          {categorias.map(cat => (
+            <button
+              key={cat.id}
+              className={`${styles.filtroBtn} ${categoriaFiltro === cat.id ? styles.filtroAtivo : ''}`}
+              onClick={() => setFiltro(cat.id)}
+            >
+              {cat.icone} {cat.nome}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className={styles.layout}>
-        <div className={styles.grid}>
-          {produtos.length === 0 && (
+        <div className={styles.conteudo}>
+          {grupos.length === 0 && (
             <EmptyState icon="🌿" title="Nenhum produto disponível" desc="Em breve novos itens serão adicionados." />
           )}
-          {produtos.map(p => (
-            <Card key={p.id} className={styles.prodCard}>
-              <div className={styles.prodImg}>
-                {p.foto_url ? <img src={p.foto_url} alt={p.nome} /> : <span className={styles.prodEmoji}>🛒</span>}
+
+          {grupos.map(grupo => (
+            <div key={grupo.id} className={styles.grupo}>
+              {categoriaFiltro === 'todas' && (
+                <h2 className={styles.grupoTitulo}>
+                  <span>{grupo.icone}</span> {grupo.nome}
+                </h2>
+              )}
+              <div className={styles.grid}>
+                {grupo.produtos.map(p => (
+                  <Card key={p.id} className={styles.prodCard}>
+                    <div className={styles.prodImg}>
+                      {p.foto_url ? <img src={p.foto_url} alt={p.nome} /> : <span className={styles.prodEmoji}>🛒</span>}
+                    </div>
+                    <div className={styles.prodInfo}>
+                      <h3 className={styles.prodNome}>{p.nome}</h3>
+                      {p.descricao && <p className={styles.prodDesc}>{p.descricao}</p>}
+                      <div className={styles.prodFooter}>
+                        <span className={styles.prodPreco}>R$ {parseFloat(p.preco).toFixed(2)}</span>
+                        {p.estoque_atual === 0
+                          ? <Badge color="gray">Indisponível</Badge>
+                          : carrinho[p.id]
+                            ? (
+                              <div className={styles.qtdCtrl}>
+                                <button onClick={() => remove(p.id)} className={styles.qtdBtn}>−</button>
+                                <span className={styles.qtdNum}>{carrinho[p.id]}</span>
+                                <button onClick={() => add(p.id)} className={styles.qtdBtn}>+</button>
+                              </div>
+                            )
+                            : <Button size="sm" onClick={() => add(p.id)}>Adicionar</Button>
+                        }
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <div className={styles.prodInfo}>
-                <h3 className={styles.prodNome}>{p.nome}</h3>
-                {p.descricao && <p className={styles.prodDesc}>{p.descricao}</p>}
-                <div className={styles.prodFooter}>
-                  <span className={styles.prodPreco}>R$ {parseFloat(p.preco).toFixed(2)}</span>
-                  {p.estoque_atual === 0
-                    ? <Badge color="gray">Indisponível</Badge>
-                    : carrinho[p.id]
-                      ? (
-                        <div className={styles.qtdCtrl}>
-                          <button onClick={() => remove(p.id)} className={styles.qtdBtn}>−</button>
-                          <span className={styles.qtdNum}>{carrinho[p.id]}</span>
-                          <button onClick={() => add(p.id)} className={styles.qtdBtn}>+</button>
-                        </div>
-                      )
-                      : <Button size="sm" onClick={() => add(p.id)}>Adicionar</Button>
-                  }
-                </div>
-              </div>
-            </Card>
+            </div>
           ))}
         </div>
 
+        {/* Painel lateral */}
         <div className={styles.aside}>
           <Card className={styles.asideCard}>
             <h3 className={styles.asideTitle}>Sua assinatura</h3>

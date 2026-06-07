@@ -21,3 +21,6 @@
 }
 .voltarBtn:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .main { margin-left: 220px; flex: 1; padding: 32px; }
+
+.sidebarBottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.adminNome { font-size: 12px; color: rgba(255,255,255,0.4); padding: 0 10px; }

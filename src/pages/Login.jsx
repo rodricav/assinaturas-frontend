@@ -91,7 +91,7 @@ export default function Login() {
               <Input label="E-mail" type="email" value={form.email} onChange={e => set('email', e.target.value)} required placeholder="seu@email.com" />
               <Input label="Senha" type="password" value={form.senha} onChange={e => set('senha', e.target.value)} required placeholder="••••••" />
               <Button type="submit" loading={loading} full size="lg">Entrar</Button>
-              <button type="button" className={styles.adminLink} onClick={() => navigate('/admin')}>
+              <button type="button" className={styles.adminLink} onClick={() => navigate('/admin/login')}>
                 Acesso administrativo →
               </button>
             </form>
