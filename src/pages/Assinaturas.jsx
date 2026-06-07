@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMinhasAssinaturas, pausarAssinatura, reativarAssinatura, cancelarAssinatura } from '../services/api';
+import api from '../services/api';
 import { Button, Card, Badge, Spinner, EmptyState, Modal, Alert } from '../components/ui';
 import styles from './Assinaturas.module.css';
 
@@ -11,8 +12,17 @@ const STATUS_BADGE = {
   cancelada: { color: 'gray',   label: 'Cancelada' },
 };
 
+const METODO_LABEL = {
+  credit_card:  '💳 Cartão de crédito',
+  debit_card:   '💳 Cartão de débito',
+  pix:          '⚡ Pix',
+  ticket:       '🎫 Boleto',
+  account_money:'💰 Saldo MP',
+};
+
 export default function Assinaturas() {
   const [assinaturas, setAssinaturas] = useState([]);
+  const [ultimoPagamento, setUltimoPagamento] = useState({});
   const [loading, setLoading]         = useState(true);
   const [erro, setErro]               = useState('');
   const [modal, setModal]             = useState(null);
@@ -24,6 +34,18 @@ export default function Assinaturas() {
     try {
       const { data } = await getMinhasAssinaturas();
       setAssinaturas(data);
+
+      // Busca último pagamento de cada assinatura
+      const pedidos = await api.get('/pedidos/meus').catch(() => ({ data: [] }));
+      const pagamentos = {};
+      (pedidos.data || []).forEach(p => {
+        if (p.pagamento_status === 'aprovado' && p.pagamento_metodo) {
+          if (!pagamentos[p.assinatura_id]) {
+            pagamentos[p.assinatura_id] = p.pagamento_metodo;
+          }
+        }
+      });
+      setUltimoPagamento(pagamentos);
     } catch { setErro('Erro ao carregar assinaturas'); }
     finally { setLoading(false); }
   }
@@ -68,6 +90,7 @@ export default function Assinaturas() {
         <div className={styles.lista}>
           {assinaturas.map(a => {
             const sb = STATUS_BADGE[a.status] || STATUS_BADGE.ativa;
+            const metodo = ultimoPagamento[a.id];
             return (
               <Card key={a.id} className={styles.card}>
                 <div className={styles.cardHeader}>
@@ -77,6 +100,11 @@ export default function Assinaturas() {
                       <Badge color={sb.color}>{sb.label}</Badge>
                     </div>
                     <p className={styles.cardSub}>A cada {a.intervalo_dias} dias</p>
+                    {metodo && (
+                      <p className={styles.metodoPag}>
+                        {METODO_LABEL[metodo] || `💳 ${metodo}`}
+                      </p>
+                    )}
                   </div>
                   <div className={styles.actions}>
                     {a.status === 'ativa' && (
