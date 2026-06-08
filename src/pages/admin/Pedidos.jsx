@@ -25,6 +25,8 @@ export default function Pedidos() {
   const [pedidos, setPedidos]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [filtro, setFiltro]     = useState('');
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim]       = useState('');
   const [modal, setModal]       = useState(null);
   const [obs, setObs]           = useState('');
   const [acao, setAcao]         = useState(false);
@@ -33,14 +35,17 @@ export default function Pedidos() {
 
   async function carregar() {
     try {
-      const params = filtro ? { status: filtro } : {};
+      const params = {};
+      if (filtro)     params.status      = filtro;
+      if (dataInicio) params.data_inicio = dataInicio;
+      if (dataFim)    params.data_fim    = dataFim;
       const { data } = await getPedidos(params);
       setPedidos(data);
     } catch { setErro('Erro ao carregar pedidos'); }
     finally { setLoading(false); }
   }
 
-  useEffect(() => { carregar(); }, [filtro]);
+  useEffect(() => { carregar(); }, [filtro, dataInicio, dataFim]);
 
   async function confirmarAvanco() {
     setAcao(true); setErro('');
@@ -74,6 +79,30 @@ export default function Pedidos() {
             {s === '' ? 'Todos' : ESTAGIOS[s]?.label}
           </button>
         ))}
+      </div>
+
+      <div className={styles.filtroData}>
+        <label className={styles.filtroDataLabel}>
+          Entrega de
+          <input
+            type="date" className={styles.filtroDataInput}
+            value={dataInicio} onChange={e => setDataInicio(e.target.value)}
+            max={dataFim || undefined}
+          />
+        </label>
+        <label className={styles.filtroDataLabel}>
+          até
+          <input
+            type="date" className={styles.filtroDataInput}
+            value={dataFim} onChange={e => setDataFim(e.target.value)}
+            min={dataInicio || undefined}
+          />
+        </label>
+        {(dataInicio || dataFim) && (
+          <button className={styles.limparData} onClick={() => { setDataInicio(''); setDataFim(''); }}>
+            Limpar datas ✕
+          </button>
+        )}
       </div>
 
       <div className={styles.lista}>

@@ -13,6 +13,20 @@
 .filtroBtn:hover { border-color: var(--brand); color: var(--brand); }
 .filtroAtivo { background: var(--brand); color: #fff; border-color: var(--brand); }
 
+.filtroData { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.filtroDataLabel { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); font-weight: 500; }
+.filtroDataInput {
+  padding: 6px 12px; border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 13px; font-family: var(--font-sans); color: var(--text);
+  outline: none; transition: border-color var(--transition);
+}
+.filtroDataInput:focus { border-color: var(--brand); }
+.limparData {
+  font-size: 12px; color: var(--text-3); background: none; border: none;
+  cursor: pointer; text-decoration: underline;
+}
+.limparData:hover { color: var(--brand); }
+
 .lista { display: flex; flex-direction: column; gap: 12px; }
 .card { display: flex; flex-direction: column; gap: 12px; }
 

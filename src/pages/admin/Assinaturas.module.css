@@ -1,0 +1,53 @@
+/* src/pages/admin/Assinaturas.module.css */
+.page { max-width: 900px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.title { font-family: var(--font-serif); font-size: 32px; }
+.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+
+.filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.filtroBtn {
+  padding: 6px 14px; border-radius: 99px; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text-2);
+  transition: all var(--transition);
+}
+.filtroBtn:hover { border-color: var(--brand); color: var(--brand); }
+.filtroAtivo { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+.lista { display: flex; flex-direction: column; gap: 12px; }
+.card { padding: 0; overflow: hidden; }
+
+.cardTop {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; padding: 16px 20px; background: none; border: none;
+  cursor: pointer; text-align: left; font-family: var(--font-sans);
+}
+.cardId { display: flex; flex-direction: column; gap: 2px; }
+.cliente { font-weight: 600; font-size: 15px; color: var(--text); }
+.plano { font-size: 13px; color: var(--text-3); }
+.cardTopRight { display: flex; align-items: center; gap: 12px; }
+.seta { font-size: 11px; color: var(--text-3); }
+
+.detalhes { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+
+.cardInfo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+.infoItem { display: flex; flex-direction: column; gap: 3px; }
+.infoLabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); font-weight: 600; }
+.infoVal { font-size: 14px; font-weight: 500; color: var(--text); }
+.infoSub { font-size: 12px; color: var(--text-3); }
+
+.motivo {
+  margin-top: 14px; padding: 10px 14px; border-radius: 8px;
+  background: #fdf0ee; color: var(--danger); font-size: 13px;
+}
+
+.itens { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.itensLista { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.item {
+  display: flex; justify-content: space-between; font-size: 14px;
+  padding: 8px 12px; background: var(--bg); border-radius: 8px;
+}
+.itemPreco { color: var(--text-3); font-size: 13px; }
+
+@media (max-width: 700px) {
+  .cardInfo { grid-template-columns: 1fr; }
+}

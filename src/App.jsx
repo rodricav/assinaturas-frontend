@@ -20,7 +20,7 @@ import Produtos            from './pages/admin/Produtos';
 import Categorias          from './pages/admin/Categorias';
 import Zonas               from './pages/admin/Zonas';
 import Assinantes          from './pages/admin/Assinantes';
-import Proximos7Dias       from './pages/admin/Proximos7Dias';
+import AssinaturasAdmin    from './pages/admin/Assinaturas';
 import Estoque7Dias        from './pages/admin/Estoque7Dias';
 
 function RotaCliente({ children }) {
@@ -58,12 +58,12 @@ export default function App() {
             <Route index                     element={<Dashboard />} />
             <Route path="pedidos"            element={<Pedidos />} />
             <Route path="pedidos/:id/editar" element={<EditarPedido />} />
-            <Route path="proximos7dias"      element={<Proximos7Dias />} />
             <Route path="estoque7dias"       element={<Estoque7Dias />} />
             <Route path="produtos"           element={<Produtos />} />
             <Route path="categorias"         element={<Categorias />} />
             <Route path="zonas"              element={<Zonas />} />
             <Route path="assinantes"         element={<Assinantes />} />
+            <Route path="assinaturas"        element={<AssinaturasAdmin />} />
           </Route>
 
           <Route path="/admin" element={<Navigate to="/admin/login" replace />} />

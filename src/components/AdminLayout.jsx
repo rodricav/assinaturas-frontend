@@ -6,12 +6,12 @@ import styles from './AdminLayout.module.css';
 const NAV = [
   { to: '/painel',              label: 'Dashboard',       icon: '📊', end: true },
   { to: '/painel/pedidos',      label: 'Pedidos',         icon: '📦' },
-  { to: '/painel/proximos7dias',label: 'Próx. 7 dias',    icon: '📅' },
   { to: '/painel/estoque7dias', label: 'Estoque 7 dias',  icon: '📊' },
   { to: '/painel/produtos',     label: 'Produtos',        icon: '🛒' },
   { to: '/painel/categorias',   label: 'Categorias',      icon: '🏷️' },
   { to: '/painel/zonas',        label: 'Zonas CEP',       icon: '📍' },
   { to: '/painel/assinantes',   label: 'Assinantes',      icon: '👥' },
+  { to: '/painel/assinaturas',  label: 'Assinaturas',     icon: '🔁' },
 ];
 
 export default function AdminLayout() {
