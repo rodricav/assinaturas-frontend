@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { getPerfil } from '../services/api';
 import api from '../services/api';
 import { Button, Input, Alert, Spinner, Card } from '../components/ui';
+import GerenciarEnderecos from '../components/GerenciarEnderecos';
 import styles from './MeuPerfil.module.css';
 
 export default function MeuPerfil() {
@@ -11,27 +12,15 @@ export default function MeuPerfil() {
   const [salvando, setSalvando]   = useState(false);
   const [erro, setErro]           = useState('');
   const [sucesso, setSucesso]     = useState('');
-  const [abaAtiva, setAba]        = useState('dados'); // 'dados' | 'endereco' | 'senha'
+  const [abaAtiva, setAba]        = useState('dados');
 
   const [formDados, setFormDados] = useState({ nome: '', telefone: '' });
-  const [formEnd, setFormEnd]     = useState({
-    cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', estado: 'SP'
-  });
   const [formSenha, setFormSenha] = useState({ senhaAtual: '', novaSenha: '', confirmar: '' });
 
   useEffect(() => {
     getPerfil().then(r => {
       setPerfil(r.data);
       setFormDados({ nome: r.data.nome, telefone: r.data.telefone });
-      setFormEnd({
-        cep:         r.data.cep || '',
-        endereco:    r.data.endereco || '',
-        numero:      r.data.numero || '',
-        complemento: r.data.complemento || '',
-        bairro:      r.data.bairro || '',
-        cidade:      r.data.cidade || '',
-        estado:      r.data.estado || 'SP',
-      });
     }).catch(() => setErro('Erro ao carregar perfil'))
     .finally(() => setLoading(false));
   }, []);
@@ -45,31 +34,10 @@ export default function MeuPerfil() {
   async function salvarDados(e) {
     e.preventDefault(); setSalvando(true);
     try {
-      const { data } = await api.patch('/clientes/me', formDados);
-      setPerfil(p => ({ ...p, ...data }));
+      await api.patch('/clientes/me', formDados);
       feedback('Dados atualizados com sucesso!');
     } catch (err) {
       feedback(err.response?.data?.erro || 'Erro ao salvar', 'erro');
-    } finally { setSalvando(false); }
-  }
-
-  async function salvarEndereco(e) {
-    e.preventDefault(); setSalvando(true);
-    try {
-      const cepLimpo = formEnd.cep.replace(/\D/g, '');
-
-      // Valida CEP primeiro
-      const { data: zonaData } = await api.get(`/clientes/validar-cep/${cepLimpo}`);
-      if (!zonaData.atendido) {
-        feedback('CEP fora da área de entrega.', 'erro');
-        setSalvando(false); return;
-      }
-
-      const { data } = await api.patch('/clientes/me', { ...formEnd, cep: cepLimpo });
-      setPerfil(p => ({ ...p, ...data }));
-      feedback('Endereço atualizado! Zona: ' + zonaData.zona.nome);
-    } catch (err) {
-      feedback(err.response?.data?.erro || 'Erro ao salvar endereço', 'erro');
     } finally { setSalvando(false); }
   }
 
@@ -103,21 +71,17 @@ export default function MeuPerfil() {
         <div>
           <h1 className={styles.title}>{perfil?.nome}</h1>
           <p className={styles.email}>{perfil?.email}</p>
-          {perfil?.zona_nome && (
-            <p className={styles.zona}>📍 {perfil.zona_nome} · frete R$ {parseFloat(perfil.custo_entrega).toFixed(2)} · {perfil.prazo_dias} dia(s)</p>
-          )}
         </div>
       </div>
 
       {sucesso && <Alert type="success">{sucesso}</Alert>}
       {erro    && <Alert type="error">{erro}</Alert>}
 
-      {/* Abas */}
       <div className={styles.tabs}>
         {[
-          { key: 'dados',    label: '👤 Dados pessoais' },
-          { key: 'endereco', label: '📍 Endereço' },
-          { key: 'senha',    label: '🔒 Senha' },
+          { key: 'dados',      label: '👤 Dados pessoais' },
+          { key: 'enderecos',  label: '📍 Endereços' },
+          { key: 'senha',      label: '🔒 Senha' },
         ].map(a => (
           <button key={a.key}
             className={`${styles.tab} ${abaAtiva === a.key ? styles.tabAtivo : ''}`}
@@ -128,7 +92,6 @@ export default function MeuPerfil() {
         ))}
       </div>
 
-      {/* Dados pessoais */}
       {abaAtiva === 'dados' && (
         <Card>
           <form onSubmit={salvarDados} className={styles.form}>
@@ -145,38 +108,13 @@ export default function MeuPerfil() {
         </Card>
       )}
 
-      {/* Endereço */}
-      {abaAtiva === 'endereco' && (
+      {abaAtiva === 'enderecos' && (
         <Card>
-          <form onSubmit={salvarEndereco} className={styles.form}>
-            <Input label="CEP" value={formEnd.cep}
-              onChange={e => setFormEnd(f => ({ ...f, cep: e.target.value }))}
-              required placeholder="13480-100" maxLength={9} />
-            <div className={styles.row2}>
-              <Input label="Endereço" value={formEnd.endereco}
-                onChange={e => setFormEnd(f => ({ ...f, endereco: e.target.value }))} required />
-              <Input label="Número" value={formEnd.numero}
-                onChange={e => setFormEnd(f => ({ ...f, numero: e.target.value }))} required />
-            </div>
-            <div className={styles.row2}>
-              <Input label="Complemento" value={formEnd.complemento}
-                onChange={e => setFormEnd(f => ({ ...f, complemento: e.target.value }))} />
-              <Input label="Bairro" value={formEnd.bairro}
-                onChange={e => setFormEnd(f => ({ ...f, bairro: e.target.value }))} required />
-            </div>
-            <div className={styles.row2}>
-              <Input label="Cidade" value={formEnd.cidade}
-                onChange={e => setFormEnd(f => ({ ...f, cidade: e.target.value }))} required />
-              <Input label="Estado" value={formEnd.estado}
-                onChange={e => setFormEnd(f => ({ ...f, estado: e.target.value }))} required maxLength={2} />
-            </div>
-            <Alert type="info">Ao alterar o CEP, verificaremos se a nova região é atendida.</Alert>
-            <Button type="submit" loading={salvando}>Salvar endereço</Button>
-          </form>
+          <p className={styles.endDesc}>Você pode ter até 3 endereços. Na hora de criar uma assinatura você escolhe qual usar.</p>
+          <GerenciarEnderecos />
         </Card>
       )}
 
-      {/* Senha */}
       {abaAtiva === 'senha' && (
         <Card>
           <form onSubmit={salvarSenha} className={styles.form}>

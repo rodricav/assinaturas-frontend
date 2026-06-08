@@ -1,42 +1,50 @@
 // src/pages/ConfirmarAssinatura.jsx
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getProdutos } from '../services/api';
+import { getProdutos, getEnderecos } from '../services/api';
 import api from '../services/api';
-import { Button, Card, Alert, Spinner } from '../components/ui';
+import { Button, Card, Alert, Spinner, Modal } from '../components/ui';
+import GerenciarEnderecos from '../components/GerenciarEnderecos';
 import styles from './ConfirmarAssinatura.module.css';
 
 export default function ConfirmarAssinatura() {
-  const { state }       = useLocation();
-  const navigate        = useNavigate();
-  const [produtos, setProdutos] = useState([]);
-  const [planos, setPlanos]     = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro]         = useState('');
-  const [sucesso, setSucesso]   = useState(false);
+  const { state }   = useLocation();
+  const navigate    = useNavigate();
 
-  // Se chegou sem state (acesso direto), volta ao catálogo
+  const [produtos, setProdutos]         = useState([]);
+  const [planos, setPlanos]             = useState([]);
+  const [enderecos, setEnderecos]       = useState([]);
+  const [enderecoId, setEnderecoId]     = useState(null);
+  const [loading, setLoading]           = useState(true);
+  const [salvando, setSalvando]         = useState(false);
+  const [erro, setErro]                 = useState('');
+  const [sucesso, setSucesso]           = useState(false);
+  const [modalEnd, setModalEnd]         = useState(false);
+
   useEffect(() => {
     if (!state?.itens) { navigate('/'); return; }
 
     Promise.all([
       getProdutos(),
       api.get('/planos'),
-    ]).then(([rProd, rPlanos]) => {
+      getEnderecos(),
+    ]).then(([rProd, rPlanos, rEnd]) => {
       setProdutos(rProd.data);
       setPlanos(rPlanos.data);
-    }).catch(() => {
-      setErro('Erro ao carregar dados. Tente novamente.');
-    }).finally(() => setLoading(false));
+      setEnderecos(rEnd.data);
+      // Seleciona endereço principal por padrão
+      const principal = rEnd.data.find(e => e.principal);
+      if (principal) setEnderecoId(principal.id);
+    }).catch(() => setErro('Erro ao carregar dados. Tente novamente.'))
+    .finally(() => setLoading(false));
   }, []);
 
   if (!state?.itens) return null;
   if (loading) return <Spinner />;
 
   const { plano_id, data_inicio, itens } = state;
-
-  const plano = planos.find(p => p.id === plano_id);
+  const plano    = planos.find(p => p.id === plano_id);
+  const endSel   = enderecos.find(e => e.id === enderecoId);
 
   const itensDetalhados = itens.map(item => {
     const prod = produtos.find(p => p.id === item.produto_id);
@@ -45,22 +53,22 @@ export default function ConfirmarAssinatura() {
 
   const subtotal  = itensDetalhados.reduce((acc, i) => acc + parseFloat(i.preco || 0) * i.quantidade, 0);
   const desconto  = plano ? subtotal * (parseFloat(plano.desconto_pct) / 100) : 0;
-  const total     = subtotal - desconto;
+  const frete     = endSel ? parseFloat(endSel.custo_entrega) : 0;
+  const total     = subtotal - desconto + frete;
 
   const dataFormatada = new Date(data_inicio + 'T12:00:00').toLocaleDateString('pt-BR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
 
   async function confirmar() {
+    if (!enderecoId) { setErro('Selecione um endereço de entrega'); return; }
     setSalvando(true); setErro('');
     try {
-      await api.post('/assinaturas', { plano_id, data_inicio, itens });
+      await api.post('/assinaturas', { plano_id, data_inicio, itens, endereco_id: enderecoId });
       setSucesso(true);
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao criar assinatura. Tente novamente.');
-    } finally {
-      setSalvando(false);
-    }
+    } finally { setSalvando(false); }
   }
 
   if (sucesso) {
@@ -71,15 +79,11 @@ export default function ConfirmarAssinatura() {
           <h2 className={styles.sucessoTitulo}>Assinatura confirmada!</h2>
           <p className={styles.sucessoDesc}>
             Sua primeira entrega está prevista para <strong>{dataFormatada}</strong>.<br />
-            Você receberá uma confirmação pelo e-mail.
+            Você receberá uma confirmação por e-mail.
           </p>
           <div className={styles.sucessoActions}>
-            <Button onClick={() => navigate('/assinaturas')} size="lg">
-              Ver minhas assinaturas
-            </Button>
-            <Button variant="ghost" onClick={() => navigate('/')}>
-              Continuar no catálogo
-            </Button>
+            <Button onClick={() => navigate('/assinaturas')} size="lg">Ver minhas assinaturas</Button>
+            <Button variant="ghost" onClick={() => navigate('/')}>Continuar no catálogo</Button>
           </div>
         </div>
       </div>
@@ -98,9 +102,9 @@ export default function ConfirmarAssinatura() {
       {erro && <Alert type="error">{erro}</Alert>}
 
       <div className={styles.layout}>
-        {/* Resumo do pedido */}
         <div className={styles.main}>
 
+          {/* Produtos */}
           <Card className={styles.section}>
             <h3 className={styles.sectionTitle}>📦 Produtos selecionados</h3>
             <div className={styles.itens}>
@@ -121,11 +125,12 @@ export default function ConfirmarAssinatura() {
             </div>
           </Card>
 
+          {/* Plano */}
           <Card className={styles.section}>
             <h3 className={styles.sectionTitle}>🔄 Plano e periodicidade</h3>
             <div className={styles.planoInfo}>
               <div className={styles.planoDetalhe}>
-                <span className={styles.planoLabel}>Plano selecionado</span>
+                <span className={styles.planoLabel}>Plano</span>
                 <span className={styles.planoVal}>{plano?.nome}</span>
               </div>
               <div className={styles.planoDetalhe}>
@@ -138,11 +143,34 @@ export default function ConfirmarAssinatura() {
               </div>
               {parseFloat(plano?.desconto_pct) > 0 && (
                 <div className={styles.planoDetalhe}>
-                  <span className={styles.planoLabel}>Desconto do plano</span>
-                  <span className={`${styles.planoVal} ${styles.verde}`}>{plano.desconto_pct}% de desconto</span>
+                  <span className={styles.planoLabel}>Desconto</span>
+                  <span className={`${styles.planoVal} ${styles.verde}`}>{plano.desconto_pct}% off</span>
                 </div>
               )}
             </div>
+          </Card>
+
+          {/* Endereço de entrega */}
+          <Card className={styles.section}>
+            <div className={styles.endHeader}>
+              <h3 className={styles.sectionTitle}>📍 Endereço de entrega</h3>
+              <button className={styles.btnTrocar} onClick={() => setModalEnd(true)}>
+                Trocar endereço
+              </button>
+            </div>
+
+            {endSel ? (
+              <div className={styles.endSel}>
+                <div className={styles.endApelido}>{endSel.apelido}</div>
+                <p className={styles.endLine}>{endSel.endereco}, {endSel.numero}{endSel.complemento ? ` ${endSel.complemento}` : ''}</p>
+                <p className={styles.endLine}>{endSel.bairro} — {endSel.cidade}/{endSel.estado} · CEP {endSel.cep.replace(/(\d{5})(\d{3})/, '$1-$2')}</p>
+                <p className={styles.endZona}>
+                  📦 {endSel.zona_nome} · frete R$ {parseFloat(endSel.custo_entrega).toFixed(2)} · {endSel.prazo_dias} dia(s) útil(eis)
+                </p>
+              </div>
+            ) : (
+              <Alert type="error">Nenhum endereço cadastrado. <button className={styles.btnLink} onClick={() => setModalEnd(true)}>Adicionar endereço</button></Alert>
+            )}
           </Card>
 
         </div>
@@ -165,7 +193,7 @@ export default function ConfirmarAssinatura() {
               )}
               <div className={styles.resumoLinha}>
                 <span>Frete</span>
-                <span className={styles.cinza}>Calculado na entrega</span>
+                <span>{endSel ? `R$ ${frete.toFixed(2)}` : <span className={styles.cinza}>Selecione o endereço</span>}</span>
               </div>
               <div className={`${styles.resumoLinha} ${styles.resumoTotal}`}>
                 <span>Total por entrega</span>
@@ -177,15 +205,22 @@ export default function ConfirmarAssinatura() {
               💳 O pagamento será cobrado automaticamente a cada entrega, após a geração do pedido.
             </div>
 
-            <Button full size="lg" loading={salvando} onClick={confirmar}>
+            <Button full size="lg" loading={salvando} disabled={!enderecoId} onClick={confirmar}>
               Confirmar assinatura
             </Button>
-            <Button full variant="ghost" onClick={() => navigate('/')}>
-              Cancelar
-            </Button>
+            <Button full variant="ghost" onClick={() => navigate('/')}>Cancelar</Button>
           </Card>
         </div>
       </div>
+
+      {/* Modal seleção/adição de endereço */}
+      <Modal open={modalEnd} onClose={() => setModalEnd(false)} title="Selecionar endereço de entrega">
+        <GerenciarEnderecos
+          modoSelecao
+          enderecoSelecionado={enderecoId}
+          onSelecionar={(end) => { setEnderecoId(end.id); setModalEnd(false); }}
+        />
+      </Modal>
     </div>
   );
 }

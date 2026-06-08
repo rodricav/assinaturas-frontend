@@ -1,13 +1,7 @@
 /* src/pages/ConfirmarAssinatura.module.css */
 .page { max-width: 900px; }
-
-.voltar {
-  background: none; border: none; color: var(--text-3);
-  font-size: 14px; margin-bottom: 20px; padding: 0;
-  transition: color var(--transition);
-}
+.voltar { background: none; border: none; color: var(--text-3); font-size: 14px; margin-bottom: 20px; padding: 0; }
 .voltar:hover { color: var(--brand); }
-
 .header { margin-bottom: 24px; }
 .title { font-family: var(--font-serif); font-size: 32px; }
 .subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
@@ -20,15 +14,8 @@
 
 /* Itens */
 .itens { display: flex; flex-direction: column; gap: 10px; }
-.item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px; background: var(--bg); border-radius: var(--radius);
-}
-.itemImg {
-  width: 48px; height: 48px; border-radius: 8px; background: var(--brand-pale);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; flex-shrink: 0; overflow: hidden;
-}
+.item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg); border-radius: var(--radius); }
+.itemImg { width: 48px; height: 48px; border-radius: 8px; background: var(--brand-pale); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; overflow: hidden; }
 .itemImg img { width: 100%; height: 100%; object-fit: cover; }
 .itemInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .itemNome { font-weight: 600; font-size: 14px; }
@@ -42,45 +29,35 @@
 .planoVal { font-size: 14px; font-weight: 500; }
 .verde { color: var(--brand); }
 
+/* Endereço */
+.endHeader { display: flex; justify-content: space-between; align-items: center; }
+.btnTrocar { background: none; border: none; font-size: 13px; color: var(--brand); font-weight: 500; }
+.btnTrocar:hover { text-decoration: underline; }
+.btnLink { background: none; border: none; color: var(--brand); font-size: 13px; text-decoration: underline; }
+.endSel { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--brand-pale); border-radius: var(--radius); border: 1.5px solid var(--brand-light); }
+.endApelido { font-weight: 600; font-size: 14px; color: var(--brand-dark); }
+.endLine { font-size: 13px; color: var(--text-2); }
+.endZona { font-size: 12px; color: var(--brand); font-weight: 500; margin-top: 4px; }
+
 /* Aside */
 .aside { position: sticky; top: 24px; }
 .resumoCard { display: flex; flex-direction: column; gap: 16px; }
-
 .resumoLinhas { display: flex; flex-direction: column; }
-.resumoLinha {
-  display: flex; justify-content: space-between;
-  padding: 10px 0; font-size: 14px;
-  border-bottom: 1px solid var(--border);
-}
+.resumoLinha { display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; border-bottom: 1px solid var(--border); }
 .resumoLinha:last-child { border-bottom: none; }
 .resumoTotal { font-weight: 700; font-size: 16px; }
 .cinza { color: var(--text-3); font-size: 13px; }
-
-.aviso {
-  background: var(--accent-warm); border-radius: var(--radius);
-  padding: 12px 14px; font-size: 12px; color: #7a5200; line-height: 1.5;
-}
+.aviso { background: var(--accent-warm); border-radius: var(--radius); padding: 12px 14px; font-size: 12px; color: #7a5200; line-height: 1.5; }
 
 /* Sucesso */
-.sucessoWrap {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 60vh; padding: 40px;
-}
-.sucessoCard {
-  text-align: center; max-width: 460px;
-  background: var(--surface); border-radius: var(--radius-lg);
-  border: 1px solid var(--border); box-shadow: var(--shadow-lg);
-  padding: 48px 40px; animation: fadeUp 0.4s ease;
-}
+.sucessoWrap { display: flex; align-items: center; justify-content: center; min-height: 60vh; padding: 40px; }
+.sucessoCard { text-align: center; max-width: 460px; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-lg); padding: 48px 40px; animation: fadeUp 0.4s ease; }
 .sucessoIcon { font-size: 64px; margin-bottom: 20px; }
 .sucessoTitulo { font-family: var(--font-serif); font-size: 28px; margin-bottom: 12px; }
 .sucessoDesc { font-size: 15px; color: var(--text-2); line-height: 1.6; margin-bottom: 28px; }
 .sucessoActions { display: flex; flex-direction: column; gap: 10px; }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 700px) {
   .layout { grid-template-columns: 1fr; }

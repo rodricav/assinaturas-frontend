@@ -1,0 +1,46 @@
+/* src/components/GerenciarEnderecos.module.css */
+.wrap { display: flex; flex-direction: column; gap: 12px; }
+
+.lista { display: flex; flex-direction: column; gap: 10px; }
+
+.card {
+  border: 1.5px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; background: var(--surface);
+  transition: all var(--transition);
+}
+.cardClicavel { cursor: pointer; }
+.cardClicavel:hover { border-color: var(--brand); background: var(--brand-pale); }
+.cardSelecionado { border-color: var(--brand); background: var(--brand-pale); }
+
+.cardHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+.cardLeft { display: flex; align-items: center; gap: 8px; }
+.apelido { font-weight: 600; font-size: 14px; }
+
+.cardActions { display: flex; gap: 10px; }
+.btnLink { background: none; border: none; font-size: 12px; color: var(--brand); font-weight: 500; padding: 2px 4px; }
+.btnLink:hover { text-decoration: underline; }
+.btnDanger { color: var(--danger); }
+
+.endLine { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.zona { font-size: 12px; color: var(--brand-dark); margin-top: 4px; font-weight: 500; }
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.cepRow { position: relative; }
+.buscando { position: absolute; right: 12px; top: 32px; font-size: 12px; color: var(--text-3); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.select {
+  padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: var(--font-sans);
+  font-size: 14px; color: var(--text); background: var(--surface); outline: none;
+}
+.select:focus { border-color: var(--brand); }
+.checkLabel { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); }
+.checkLabel input { accent-color: var(--brand); }
+.formActions { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (max-width: 480px) {
+  .row2 { grid-template-columns: 1fr; }
+}

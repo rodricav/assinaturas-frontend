@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { getEnderecos } from '../../services/api';
+import GerenciarEnderecos from '../../components/GerenciarEnderecos';
 import { getProdutosAdmin } from '../../services/api';
 import { Card, Button, Input, Alert, Spinner, Badge } from '../../components/ui';
 import styles from './EditarPedido.module.css';
@@ -16,6 +18,9 @@ export default function EditarPedido() {
   const [observacao, setObservacao] = useState('');
   const [loading, setLoading]       = useState(true);
   const [salvando, setSalvando]     = useState(false);
+  const [enderecos, setEnderecos]   = useState([]);
+  const [modalEnd, setModalEnd]     = useState(false);
+  const [enderecoId, setEnderecoId] = useState(null);
   const [erro, setErro]             = useState('');
 
   useEffect(() => {
@@ -34,6 +39,10 @@ export default function EditarPedido() {
         if (!item.item_em_falta) c[item.produto_id] = item.quantidade;
       });
       setCarrinho(c);
+      // Carrega endereços do cliente
+      getEnderecos(rPedido.data.assinatura_id ? undefined : undefined).then(r => {
+        setEnderecos(r.data);
+      }).catch(() => {});
     }).catch(() => setErro('Erro ao carregar pedido'))
     .finally(() => setLoading(false));
   }, [id]);

@@ -73,3 +73,22 @@ export const getMeAdmin  = ()     => api.get('/auth/admin/me');
 export const getCategorias    = ()         => api.get('/categorias');
 export const criarCategoria   = (data)     => api.post('/categorias', data);
 export const editarCategoria  = (id, data) => api.patch(`/categorias/${id}`, data);
+
+// ── Endereços ────────────────────────────────────────────────────────────────
+export const getEnderecos       = (clienteId)    => api.get('/enderecos', { params: clienteId ? { cliente_id: clienteId } : {} });
+export const criarEndereco      = (data)         => api.post('/enderecos', data);
+export const editarEndereco     = (id, data)     => api.patch(`/enderecos/${id}`, data);
+export const deletarEndereco    = (id)           => api.delete(`/enderecos/${id}`);
+export const tornarPrincipal    = (id)           => api.patch(`/enderecos/${id}/principal`);
+
+// ── ViaCEP ───────────────────────────────────────────────────────────────────
+export const buscarCep = async (cep) => {
+  const cepLimpo = cep.replace(/\D/g, '');
+  if (cepLimpo.length !== 8) return null;
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+    const data = await r.json();
+    if (data.erro) return null;
+    return data;
+  } catch { return null; }
+};
