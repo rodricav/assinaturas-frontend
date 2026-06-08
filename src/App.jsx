@@ -10,6 +10,7 @@ import Assinaturas         from './pages/Assinaturas';
 import ConfirmarAssinatura from './pages/ConfirmarAssinatura';
 import MeusPedidos         from './pages/MeusPedidos';
 import EditarAssinatura    from './pages/EditarAssinatura';
+import MeuPerfil           from './pages/MeuPerfil';
 import ClienteLayout       from './components/ClienteLayout';
 import AdminLayout         from './components/AdminLayout';
 import Dashboard           from './pages/admin/Dashboard';
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="assinaturas/:id/editar" element={<EditarAssinatura />} />
             <Route path="pedidos"            element={<MeusPedidos />} />
             <Route path="assinar"            element={<ConfirmarAssinatura />} />
+            <Route path="perfil"             element={<MeuPerfil />} />
           </Route>
 
           <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>

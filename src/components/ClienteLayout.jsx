@@ -7,6 +7,7 @@ const NAV = [
   { to: '/',           label: 'Catálogo',          icon: '🛒' },
   { to: '/assinaturas', label: 'Assinaturas',      icon: '🔄' },
   { to: '/pedidos',    label: 'Meus pedidos',       icon: '📦' },
+  { to: '/perfil',     label: 'Meu perfil',         icon: '👤' },
 ];
 
 export default function ClienteLayout() {
