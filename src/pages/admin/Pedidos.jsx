@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPedidos, avancarEstagio } from '../../services/api';
+import api from '../../services/api';
 import { Card, Badge, Button, Spinner, Alert, Modal } from '../../components/ui';
 import styles from './Pedidos.module.css';
 
@@ -21,16 +22,83 @@ const PROXIMO_LABEL = {
   entregue:          'Marcar entregue',
 };
 
+function imprimirPedido(p) {
+  const itens = (p.itens || []).map(i =>
+    `<tr>
+      <td style="padding:8px;border-bottom:1px solid #eee">${i.nome || i.produto_nome || '—'}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantidade}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">R$ ${(parseFloat(i.preco_unitario||0)*i.quantidade).toFixed(2)}</td>
+    </tr>`
+  ).join('');
+
+  const html = `
+    <html><head>
+      <title>Separação ${p.numero_pedido || p.id?.slice(0,8)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 32px; color: #333; }
+        h1 { color: #1a6b3c; margin-bottom: 4px; }
+        .sub { color: #666; font-size: 13px; margin-bottom: 24px; }
+        .info { display: flex; gap: 40px; margin-bottom: 24px; flex-wrap: wrap; }
+        .info-item { display: flex; flex-direction: column; gap: 2px; }
+        .info-label { font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 0.05em; }
+        .info-val { font-size: 15px; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: #f5f5f5; }
+        th { padding: 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; }
+        th:last-child { text-align: right; }
+        th:nth-child(2) { text-align: center; }
+        .total { text-align: right; margin-top: 16px; font-size: 16px; font-weight: 700; }
+        .obs { margin-top: 20px; background: #fff8e6; padding: 12px; border-radius: 6px; font-size: 13px; }
+        @media print { body { padding: 16px; } }
+      </style>
+    </head><body>
+      <h1>Lista de separação</h1>
+      <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+      <div class="info">
+        <div class="info-item">
+          <span class="info-label">Pedido</span>
+          <span class="info-val">${p.numero_pedido || '#' + (p.id?.slice(0,8)||'').toUpperCase()}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Cliente</span>
+          <span class="info-val">${p.cliente_nome}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Entrega prevista</span>
+          <span class="info-val">${p.data_entrega_prevista ? new Date(p.data_entrega_prevista).toLocaleDateString('pt-BR') : '—'}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Status</span>
+          <span class="info-val">${ESTAGIOS[p.status]?.label || p.status}</span>
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Produto</th><th>Qtd</th><th>Subtotal</th>
+        </tr></thead>
+        <tbody>${itens}</tbody>
+      </table>
+      <div class="total">Total: R$ ${parseFloat(p.total||0).toFixed(2)}</div>
+      ${p.observacao_admin ? `<div class="obs">📋 <strong>Observação:</strong> ${p.observacao_admin}</div>` : ''}
+    </body></html>
+  `;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
 export default function Pedidos() {
-  const [pedidos, setPedidos]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [filtro, setFiltro]     = useState('');
+  const [pedidos, setPedidos]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [filtro, setFiltro]         = useState('');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim]       = useState('');
-  const [modal, setModal]       = useState(null);
-  const [obs, setObs]           = useState('');
-  const [acao, setAcao]         = useState(false);
-  const [erro, setErro]         = useState('');
+  const [modal, setModal]           = useState(null);
+  const [obs, setObs]               = useState('');
+  const [acao, setAcao]             = useState(false);
+  const [erro, setErro]             = useState('');
   const navigate = useNavigate();
 
   async function carregar() {
@@ -56,6 +124,15 @@ export default function Pedidos() {
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao avançar estágio');
     } finally { setAcao(false); }
+  }
+
+  async function handleImprimir(p) {
+    try {
+      const { data } = await api.get(`/pedidos/${p.id}`);
+      imprimirPedido(data);
+    } catch {
+      imprimirPedido(p);
+    }
   }
 
   if (loading) return <Spinner />;
@@ -84,19 +161,15 @@ export default function Pedidos() {
       <div className={styles.filtroData}>
         <label className={styles.filtroDataLabel}>
           Entrega de
-          <input
-            type="date" className={styles.filtroDataInput}
+          <input type="date" className={styles.filtroDataInput}
             value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-            max={dataFim || undefined}
-          />
+            max={dataFim || undefined} />
         </label>
         <label className={styles.filtroDataLabel}>
           até
-          <input
-            type="date" className={styles.filtroDataInput}
+          <input type="date" className={styles.filtroDataInput}
             value={dataFim} onChange={e => setDataFim(e.target.value)}
-            min={dataInicio || undefined}
-          />
+            min={dataInicio || undefined} />
         </label>
         {(dataInicio || dataFim) && (
           <button className={styles.limparData} onClick={() => { setDataInicio(''); setDataFim(''); }}>
@@ -107,7 +180,7 @@ export default function Pedidos() {
 
       <div className={styles.lista}>
         {pedidos.map(p => {
-          const est    = ESTAGIOS[p.status] || ESTAGIOS.cancelado;
+          const est     = ESTAGIOS[p.status] || ESTAGIOS.cancelado;
           const proximo = est.proximo;
           const podeEditar = ['aguardando_pagamento', 'confirmado'].includes(p.status);
 
@@ -115,7 +188,7 @@ export default function Pedidos() {
             <Card key={p.id} className={styles.card}>
               <div className={styles.cardTop}>
                 <div className={styles.cardId}>
-                  <span className={styles.numPedido}>#{p.numero_pedido || p.id.slice(0,8).toUpperCase()}</span>
+                  <span className={styles.numPedido}>{p.numero_pedido || '#' + p.id.slice(0,8).toUpperCase()}</span>
                   <span className={styles.ciclo}>Ciclo {p.numero_ciclo}</span>
                 </div>
                 <Badge color={est.color}>{est.label}</Badge>
@@ -133,9 +206,7 @@ export default function Pedidos() {
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>Entrega prevista</span>
                   <span className={styles.infoVal}>
-                    {p.data_entrega_prevista
-                      ? new Date(p.data_entrega_prevista).toLocaleDateString('pt-BR')
-                      : '—'}
+                    {p.data_entrega_prevista ? new Date(p.data_entrega_prevista).toLocaleDateString('pt-BR') : '—'}
                   </span>
                 </div>
                 <div className={styles.infoItem}>
@@ -144,12 +215,14 @@ export default function Pedidos() {
                 </div>
               </div>
 
-              {/* Observação do admin */}
               {p.observacao_admin && (
                 <div className={styles.obsAdmin}>📋 {p.observacao_admin}</div>
               )}
 
               <div className={styles.cardActions}>
+                <Button size="sm" variant="ghost" onClick={() => handleImprimir(p)}>
+                  🖨️ Imprimir
+                </Button>
                 {podeEditar && (
                   <Button size="sm" variant="ghost" onClick={() => navigate(`/painel/pedidos/${p.id}/editar`)}>
                     ✏️ Editar
@@ -174,11 +247,9 @@ export default function Pedidos() {
       <Modal open={!!modal} onClose={() => setModal(null)} title="Confirmar avanço de estágio">
         <div className={styles.modalContent}>
           <p>Avançar para: <strong>{modal?.novoEstagio && ESTAGIOS[modal.novoEstagio]?.label}</strong></p>
-          <textarea
-            className={styles.obsInput} rows={3}
+          <textarea className={styles.obsInput} rows={3}
             placeholder="Observação (opcional)"
-            value={obs} onChange={e => setObs(e.target.value)}
-          />
+            value={obs} onChange={e => setObs(e.target.value)} />
           <div className={styles.modalActions}>
             <Button variant="ghost" onClick={() => setModal(null)}>Cancelar</Button>
             <Button loading={acao} onClick={confirmarAvanco}>Confirmar</Button>
