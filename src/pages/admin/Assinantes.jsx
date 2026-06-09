@@ -1,18 +1,54 @@
 // src/pages/admin/Assinantes.jsx
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAssinantes } from '../../services/api';
-import { Card, Badge, Spinner, Alert } from '../../components/ui';
+import api from '../../services/api';
+import { Card, Badge, Spinner, Alert, Button, Input, Modal } from '../../components/ui';
+import GerenciarEnderecos from '../../components/GerenciarEnderecos';
 import styles from './Assinantes.module.css';
 
 export default function Assinantes() {
   const [assinantes, setAssinantes] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [erro, setErro]             = useState('');
+  const [sucesso, setSucesso]       = useState('');
   const [busca, setBusca]           = useState('');
+  const [clienteSel, setClienteSel] = useState(null);
+  const [aba, setAba]               = useState('dados'); // 'dados' | 'enderecos'
+  const [salvando, setSalvando]     = useState(false);
+  const [formDados, setFormDados]   = useState({ nome: '', telefone: '' });
+  const navigate = useNavigate();
 
   useEffect(() => {
-    getAssinantes().then(r => setAssinantes(r.data)).catch(() => setErro('Erro ao carregar')).finally(() => setLoading(false));
+    carregar();
   }, []);
+
+  async function carregar() {
+    try {
+      const { data } = await getAssinantes();
+      setAssinantes(data);
+    } catch { setErro('Erro ao carregar'); }
+    finally { setLoading(false); }
+  }
+
+  function abrirCliente(a) {
+    setClienteSel(a);
+    setFormDados({ nome: a.nome, telefone: a.telefone });
+    setAba('dados');
+    setSucesso(''); setErro('');
+  }
+
+  async function salvarDados(e) {
+    e.preventDefault(); setSalvando(true); setErro('');
+    try {
+      await api.patch(`/admin/clientes/${clienteSel.id}`, formDados);
+      setSucesso('Dados atualizados!');
+      await carregar();
+      setClienteSel(a => ({ ...a, ...formDados }));
+    } catch (err) {
+      setErro(err.response?.data?.erro || 'Erro ao salvar');
+    } finally { setSalvando(false); }
+  }
 
   const filtrados = assinantes.filter(a =>
     a.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -42,6 +78,7 @@ export default function Assinantes() {
           <span>Contato</span>
           <span>Assinaturas ativas</span>
           <span>Próxima entrega</span>
+          <span></span>
         </div>
         {filtrados.map(a => (
           <Card key={a.id} className={styles.row}>
@@ -67,9 +104,61 @@ export default function Assinantes() {
                 ? new Date(a.proxima_geracao).toLocaleDateString('pt-BR')
                 : '—'}
             </div>
+            <div>
+              <Button size="sm" variant="ghost" onClick={() => abrirCliente(a)}>
+                ✏️ Editar
+              </Button>
+            </div>
           </Card>
         ))}
       </div>
+
+      {/* Modal de edição do cliente */}
+      <Modal
+        open={!!clienteSel}
+        onClose={() => setClienteSel(null)}
+        title={`Editar cliente — ${clienteSel?.nome}`}
+      >
+        <div className={styles.modalWrap}>
+          {/* Abas */}
+          <div className={styles.tabs}>
+            <button className={`${styles.tab} ${aba === 'dados' ? styles.tabAtivo : ''}`} onClick={() => setAba('dados')}>
+              👤 Dados
+            </button>
+            <button className={`${styles.tab} ${aba === 'enderecos' ? styles.tabAtivo : ''}`} onClick={() => setAba('enderecos')}>
+              📍 Endereços
+            </button>
+          </div>
+
+          {sucesso && <Alert type="success">{sucesso}</Alert>}
+          {erro    && <Alert type="error">{erro}</Alert>}
+
+          {aba === 'dados' && (
+            <form onSubmit={salvarDados} className={styles.form}>
+              <Input label="Nome completo" value={formDados.nome}
+                onChange={e => setFormDados(f => ({ ...f, nome: e.target.value }))} required />
+              <Input label="Telefone" value={formDados.telefone}
+                onChange={e => setFormDados(f => ({ ...f, telefone: e.target.value }))} required />
+              <div className={styles.campoInfo}>
+                <span className={styles.campoLabel}>E-mail</span>
+                <span className={styles.campoVal}>{clienteSel?.email}</span>
+              </div>
+              <div className={styles.campoInfo}>
+                <span className={styles.campoLabel}>Cidade</span>
+                <span className={styles.campoVal}>{clienteSel?.cidade}/{clienteSel?.estado}</span>
+              </div>
+              <Button type="submit" loading={salvando}>Salvar dados</Button>
+            </form>
+          )}
+
+          {aba === 'enderecos' && clienteSel && (
+            <div className={styles.endWrap}>
+              <p className={styles.endDesc}>Gerencie os endereços de entrega deste cliente.</p>
+              <GerenciarEnderecos clienteId={clienteSel.id} />
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

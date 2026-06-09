@@ -41,3 +41,15 @@
   .thead { display: none; }
   .row { grid-template-columns: 1fr; gap: 8px; }
 }
+
+.modalWrap { display: flex; flex-direction: column; gap: 14px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.tab { padding: 8px 16px; background: none; border: none; font-size: 14px; font-weight: 500; color: var(--text-3); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all var(--transition); }
+.tab:hover { color: var(--brand); }
+.tabAtivo { color: var(--brand); border-bottom-color: var(--brand); }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.campoInfo { display: flex; flex-direction: column; gap: 2px; }
+.campoLabel { font-size: 12px; font-weight: 500; color: var(--text-3); }
+.campoVal { font-size: 14px; color: var(--text); }
+.endWrap { display: flex; flex-direction: column; gap: 8px; }
+.endDesc { font-size: 13px; color: var(--text-3); }

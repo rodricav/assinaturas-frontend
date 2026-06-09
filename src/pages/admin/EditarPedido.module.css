@@ -41,3 +41,11 @@
   .layout { grid-template-columns: 1fr; }
   .aside { position: static; }
 }
+
+.endHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.btnTrocar { background: none; border: none; font-size: 13px; color: var(--brand); font-weight: 500; }
+.btnTrocar:hover { text-decoration: underline; }
+.endSel { padding: 12px; background: var(--brand-pale); border-radius: var(--radius); border: 1.5px solid var(--brand-light); display: flex; flex-direction: column; gap: 3px; }
+.endApelido { font-weight: 600; font-size: 14px; color: var(--brand-dark); }
+.endLine { font-size: 13px; color: var(--text-2); }
+.endZona { font-size: 12px; color: var(--brand); margin-top: 4px; }

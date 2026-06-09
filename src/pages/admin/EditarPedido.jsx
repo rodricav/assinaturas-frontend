@@ -2,10 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { getEnderecos } from '../../services/api';
+import { getEnderecos, getProdutosAdmin } from '../../services/api';
+import { Card, Button, Input, Alert, Spinner, Badge, Modal } from '../../components/ui';
 import GerenciarEnderecos from '../../components/GerenciarEnderecos';
-import { getProdutosAdmin } from '../../services/api';
-import { Card, Button, Input, Alert, Spinner, Badge } from '../../components/ui';
 import styles from './EditarPedido.module.css';
 
 export default function EditarPedido() {
@@ -18,10 +17,15 @@ export default function EditarPedido() {
   const [observacao, setObservacao] = useState('');
   const [loading, setLoading]       = useState(true);
   const [salvando, setSalvando]     = useState(false);
-  const [enderecos, setEnderecos]   = useState([]);
-  const [modalEnd, setModalEnd]     = useState(false);
-  const [enderecoId, setEnderecoId] = useState(null);
   const [erro, setErro]             = useState('');
+  const [sucesso, setSucesso]       = useState('');
+
+  // Endereço
+  const [enderecos, setEnderecos]   = useState([]);
+  const [enderecoId, setEnderecoId] = useState(null);
+  const [modalEnd, setModalEnd]     = useState(false);
+
+  const clienteId = pedido?.assinatura_id; // usado para buscar endereços
 
   useEffect(() => {
     Promise.all([
@@ -33,16 +37,21 @@ export default function EditarPedido() {
       setProdutos(rProd.data);
       setObservacao(p.observacao_admin || '');
 
-      // Monta carrinho com itens atuais (só os disponíveis)
       const c = {};
       (p.itens || []).forEach(item => {
         if (!item.item_em_falta) c[item.produto_id] = item.quantidade;
       });
       setCarrinho(c);
-      // Carrega endereços do cliente
-      getEnderecos(rPedido.data.assinatura_id ? undefined : undefined).then(r => {
-        setEnderecos(r.data);
-      }).catch(() => {});
+
+      // Busca endereços passando cliente_id via query
+      api.get('/enderecos', { params: { cliente_id: p.cliente_id } })
+        .then(r => {
+          setEnderecos(r.data);
+          // Pré-seleciona o endereço atual da assinatura ou o principal
+          const principal = r.data.find(e => e.principal);
+          if (principal) setEnderecoId(principal.id);
+        })
+        .catch(() => {});
     }).catch(() => setErro('Erro ao carregar pedido'))
     .finally(() => setLoading(false));
   }, [id]);
@@ -54,11 +63,20 @@ export default function EditarPedido() {
     return n;
   });
 
+  const endSel    = enderecos.find(e => e.id === enderecoId);
   const totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
-  const totalValor = Object.entries(carrinho).reduce((acc, [pid, qtd]) => {
+  const subtotal   = Object.entries(carrinho).reduce((acc, [pid, qtd]) => {
     const p = produtos.find(x => x.id === pid);
     return acc + (p ? parseFloat(p.preco) * qtd : 0);
   }, 0);
+  const frete      = endSel ? parseFloat(endSel.custo_entrega || 0) : 0;
+  const totalValor = subtotal + frete;
+
+  function feedback(msg, tipo = 'sucesso') {
+    if (tipo === 'sucesso') { setSucesso(msg); setErro(''); }
+    else { setErro(msg); setSucesso(''); }
+    setTimeout(() => { setSucesso(''); setErro(''); }, 4000);
+  }
 
   async function salvar() {
     if (totalItens === 0) { setErro('Selecione ao menos um produto'); return; }
@@ -66,6 +84,10 @@ export default function EditarPedido() {
     try {
       const itens = Object.entries(carrinho).map(([produto_id, quantidade]) => ({ produto_id, quantidade }));
       await api.patch(`/pedidos/${id}/itens`, { itens, observacao });
+      // Salva endereço se mudou
+      if (enderecoId) {
+        await api.patch(`/pedidos/${id}/endereco`, { endereco_id: enderecoId }).catch(() => {});
+      }
       navigate('/painel/pedidos');
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao salvar');
@@ -76,7 +98,7 @@ export default function EditarPedido() {
     setSalvando(true);
     try {
       await api.patch(`/pedidos/${id}/observacao`, { observacao });
-      navigate('/painel/pedidos');
+      feedback('Observação salva!');
     } catch { setErro('Erro ao salvar observação'); }
     finally { setSalvando(false); }
   }
@@ -92,7 +114,7 @@ export default function EditarPedido() {
 
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Editar pedido #{(pedido?.numero_pedido || id.slice(0,8).toUpperCase())}</h1>
+          <h1 className={styles.title}>Editar pedido {pedido.numero_pedido || '#' + id.slice(0,8).toUpperCase()}</h1>
           <p className={styles.subtitle}>{pedido.cliente_nome} — {pedido.cliente_email}</p>
         </div>
         <Badge color={pedido.status === 'confirmado' ? 'blue' : pedido.status === 'aguardando_pagamento' ? 'yellow' : 'gray'}>
@@ -100,17 +122,16 @@ export default function EditarPedido() {
         </Badge>
       </div>
 
-      {erro && <Alert type="error">{erro}</Alert>}
+      {erro    && <Alert type="error">{erro}</Alert>}
+      {sucesso && <Alert type="success">{sucesso}</Alert>}
 
-      {/* Observação — sempre editável */}
+      {/* Observação */}
       <Card className={styles.obsCard}>
         <h3 className={styles.secTitle}>📋 Observação para o cliente</h3>
         <textarea
-          className={styles.obsInput}
-          rows={3}
+          className={styles.obsInput} rows={3}
           placeholder="Ex: Substituímos a alface por rúcula devido à disponibilidade..."
-          value={observacao}
-          onChange={e => setObservacao(e.target.value)}
+          value={observacao} onChange={e => setObservacao(e.target.value)}
         />
         <p className={styles.obsHint}>Esta observação aparece para o cliente na seção de pedidos.</p>
         {!podeEditarItens && (
@@ -118,7 +139,28 @@ export default function EditarPedido() {
         )}
       </Card>
 
-      {/* Edição de itens — só para pedidos aguardando/confirmados */}
+      {/* Endereço de entrega — sempre editável */}
+      <Card className={styles.obsCard}>
+        <div className={styles.endHeader}>
+          <h3 className={styles.secTitle}>📍 Endereço de entrega</h3>
+          <button className={styles.btnTrocar} onClick={() => setModalEnd(true)}>Trocar endereço</button>
+        </div>
+
+        {endSel ? (
+          <div className={styles.endSel}>
+            <div className={styles.endApelido}>{endSel.apelido}</div>
+            <p className={styles.endLine}>{endSel.endereco}, {endSel.numero}{endSel.complemento ? ` ${endSel.complemento}` : ''}</p>
+            <p className={styles.endLine}>{endSel.bairro} — {endSel.cidade}/{endSel.estado} · CEP {endSel.cep?.replace(/(\d{5})(\d{3})/, '$1-$2')}</p>
+            <p className={styles.endZona}>
+              Frete: <strong>R$ {parseFloat(endSel.custo_entrega || 0).toFixed(2)}</strong> · {endSel.prazo_dias} dia(s) útil(eis) — {endSel.zona_nome}
+            </p>
+          </div>
+        ) : (
+          <p className={styles.obsHint}>Nenhum endereço selecionado.</p>
+        )}
+      </Card>
+
+      {/* Edição de itens */}
       {podeEditarItens ? (
         <div className={styles.layout}>
           <div>
@@ -167,8 +209,12 @@ export default function EditarPedido() {
                   </div>
                 );
               })}
+              <div className={styles.resumoItem}>
+                <span>Frete</span>
+                <span>R$ {frete.toFixed(2)}</span>
+              </div>
               <div className={styles.resumoTotal}>
-                <span>Subtotal</span>
+                <span>Total</span>
                 <span>R$ {totalValor.toFixed(2)}</span>
               </div>
               <Button full loading={salvando} disabled={totalItens === 0} onClick={salvar}>
@@ -180,9 +226,19 @@ export default function EditarPedido() {
         </div>
       ) : (
         <Alert type="info">
-          Este pedido está em <strong>{pedido.status.replace(/_/g, ' ')}</strong> — não é possível alterar os itens. Você ainda pode editar a observação acima.
+          Este pedido está em <strong>{pedido.status.replace(/_/g, ' ')}</strong> — não é possível alterar os itens. Você ainda pode editar a observação e o endereço acima.
         </Alert>
       )}
+
+      {/* Modal seleção de endereço */}
+      <Modal open={modalEnd} onClose={() => setModalEnd(false)} title="Selecionar endereço de entrega">
+        <GerenciarEnderecos
+          clienteId={pedido.cliente_id}
+          modoSelecao
+          enderecoSelecionado={enderecoId}
+          onSelecionar={(end) => { setEnderecoId(end.id); setModalEnd(false); }}
+        />
+      </Modal>
     </div>
   );
 }
