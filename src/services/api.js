@@ -94,4 +94,3 @@ export const buscarCep = async (cep) => {
   } catch { return null; }
 };
 
-export const getAssinaturasAdmin = (params) => api.get('/admin/assinaturas', { params });
