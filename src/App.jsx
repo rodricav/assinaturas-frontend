@@ -6,7 +6,7 @@ import './styles/global.css';
 import Login               from './pages/Login';
 import LoginAdmin          from './pages/LoginAdmin';
 import Catalogo            from './pages/Catalogo';
-import Assinaturas         from './pages/admin/Assinaturas';
+import Assinaturas         from './pages/Assinaturas';
 import ConfirmarAssinatura from './pages/ConfirmarAssinatura';
 import MeusPedidos         from './pages/MeusPedidos';
 import EditarAssinatura    from './pages/EditarAssinatura';
