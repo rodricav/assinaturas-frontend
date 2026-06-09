@@ -15,6 +15,7 @@ export default function Assinaturas() {
   const [loading, setLoading]         = useState(true);
   const [erro, setErro]               = useState('');
   const [filtro, setFiltro]           = useState('');
+  const [busca, setBusca]             = useState('');
   const [aberta, setAberta]           = useState(null);
 
   async function carregar() {
@@ -29,6 +30,17 @@ export default function Assinaturas() {
 
   useEffect(() => { carregar(); }, [filtro]);
 
+  const termo = busca.toLowerCase().trim();
+  const filtradas = assinaturas.filter(a => {
+    if (!termo) return true;
+    const nome     = (a.cliente_nome    || '').toLowerCase();
+    const cidade   = (a.cliente_cidade  || '').toLowerCase();
+    const endereco = (a.cliente_endereco|| '').toLowerCase();
+    const bairro   = (a.cliente_bairro  || '').toLowerCase();
+    return nome.includes(termo) || cidade.includes(termo) ||
+           endereco.includes(termo) || bairro.includes(termo);
+  });
+
   if (loading) return <Spinner />;
 
   return (
@@ -36,11 +48,25 @@ export default function Assinaturas() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Assinaturas</h1>
-          <p className={styles.subtitle}>{assinaturas.length} assinatura(s) encontrada(s)</p>
+          <p className={styles.subtitle}>
+            {filtradas.length} de {assinaturas.length} assinatura(s)
+          </p>
         </div>
       </div>
 
       {erro && <Alert type="error">{erro}</Alert>}
+
+      <div className={styles.buscaWrap}>
+        <input
+          className={styles.busca}
+          placeholder="🔍 Buscar por nome, cidade, bairro ou endereço..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+        />
+        {busca && (
+          <button className={styles.limparBusca} onClick={() => setBusca('')}>✕</button>
+        )}
+      </div>
 
       <div className={styles.filtros}>
         {['', 'ativa', 'pausada', 'cancelada'].map(s => (
@@ -52,8 +78,14 @@ export default function Assinaturas() {
         ))}
       </div>
 
+      {filtradas.length === 0 && (
+        <Card className={styles.vazio}>
+          <p>Nenhuma assinatura encontrada para "{busca}".</p>
+        </Card>
+      )}
+
       <div className={styles.lista}>
-        {assinaturas.map(a => {
+        {filtradas.map(a => {
           const est       = STATUS[a.status] || STATUS.ativa;
           const expandida = aberta === a.id;
 
@@ -63,6 +95,11 @@ export default function Assinaturas() {
                 <div className={styles.cardId}>
                   <span className={styles.cliente}>{a.cliente_nome}</span>
                   <span className={styles.plano}>{a.plano_nome} · {a.intervalo_dias} dias</span>
+                  {(a.cliente_cidade || a.cliente_bairro) && (
+                    <span className={styles.localidade}>
+                      📍 {[a.cliente_bairro, a.cliente_cidade].filter(Boolean).join(', ')}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.cardTopRight}>
                   <Badge color={est.color}>{est.label}</Badge>
@@ -78,6 +115,18 @@ export default function Assinaturas() {
                       <span className={styles.infoVal}>{a.cliente_nome}</span>
                       <span className={styles.infoSub}>{a.cliente_email} · {a.cliente_telefone}</span>
                     </div>
+                    {a.cliente_endereco && (
+                      <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>Endereço</span>
+                        <span className={styles.infoVal}>
+                          {a.cliente_endereco}, {a.cliente_numero}
+                          {a.cliente_complemento ? ` ${a.cliente_complemento}` : ''}
+                        </span>
+                        <span className={styles.infoSub}>
+                          {a.cliente_bairro} — {a.cliente_cidade}/{a.cliente_estado}
+                        </span>
+                      </div>
+                    )}
                     <div className={styles.infoItem}>
                       <span className={styles.infoLabel}>Plano</span>
                       <span className={styles.infoVal}>{a.plano_nome} ({a.intervalo_dias} dias)</span>
