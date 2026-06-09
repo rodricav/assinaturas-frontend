@@ -67,3 +67,9 @@
   /* Botões menores no mobile */
   .actions button { font-size: 12px !important; padding: 6px 12px !important; }
 }
+.buscaWrap { position: relative; margin-bottom: 16px; }
+.busca { width: 100%; padding: 10px 40px 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 14px; outline: none; transition: border-color var(--transition); }
+.busca:focus { border-color: var(--brand); }
+.limparBusca { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-3); font-size: 14px; }
+.localidade { font-size: 12px; color: var(--text-3); }
+.vazio { text-align: center; padding: 32px; color: var(--text-3); }

@@ -1,69 +1,45 @@
-// src/pages/Assinaturas.jsx
+// src/pages/admin/Assinaturas.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getMinhasAssinaturas, pausarAssinatura, reativarAssinatura, cancelarAssinatura } from '../services/api';
-import api from '../services/api';
-import { Button, Card, Badge, Spinner, EmptyState, Modal, Alert } from '../components/ui';
+import { getAssinaturasAdmin } from '../../services/api';
+import { Card, Badge, Spinner, Alert } from '../../components/ui';
 import styles from './Assinaturas.module.css';
 
-const STATUS_BADGE = {
+const STATUS = {
   ativa:     { color: 'green',  label: 'Ativa' },
   pausada:   { color: 'yellow', label: 'Pausada' },
-  cancelada: { color: 'gray',   label: 'Cancelada' },
-};
-
-const METODO_LABEL = {
-  credit_card:  '💳 Cartão de crédito',
-  debit_card:   '💳 Cartão de débito',
-  pix:          '⚡ Pix',
-  ticket:       '🎫 Boleto',
-  account_money:'💰 Saldo MP',
+  cancelada: { color: 'red',    label: 'Cancelada' },
 };
 
 export default function Assinaturas() {
   const [assinaturas, setAssinaturas] = useState([]);
-  const [ultimoPagamento, setUltimoPagamento] = useState({});
   const [loading, setLoading]         = useState(true);
   const [erro, setErro]               = useState('');
-  const [modal, setModal]             = useState(null);
-  const [motivo, setMotivo]           = useState('');
-  const [acao, setAcao]               = useState(false);
-  const navigate = useNavigate();
+  const [filtro, setFiltro]           = useState('');
+  const [busca, setBusca]             = useState('');
+  const [aberta, setAberta]           = useState(null);
 
   async function carregar() {
+    setLoading(true);
     try {
-      const { data } = await getMinhasAssinaturas();
+      const params = filtro ? { status: filtro } : {};
+      const { data } = await getAssinaturasAdmin(params);
       setAssinaturas(data);
-
-      // Busca último pagamento de cada assinatura
-      const pedidos = await api.get('/pedidos/meus').catch(() => ({ data: [] }));
-      const pagamentos = {};
-      (pedidos.data || []).forEach(p => {
-        if (p.pagamento_status === 'aprovado' && p.pagamento_metodo) {
-          if (!pagamentos[p.assinatura_id]) {
-            pagamentos[p.assinatura_id] = p.pagamento_metodo;
-          }
-        }
-      });
-      setUltimoPagamento(pagamentos);
     } catch { setErro('Erro ao carregar assinaturas'); }
     finally { setLoading(false); }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); }, [filtro]);
 
-  async function executarAcao() {
-    setAcao(true);
-    try {
-      if (modal.tipo === 'pausar')   await pausarAssinatura(modal.id);
-      if (modal.tipo === 'reativar') await reativarAssinatura(modal.id);
-      if (modal.tipo === 'cancelar') await cancelarAssinatura(modal.id, { motivo });
-      setModal(null); setMotivo('');
-      await carregar();
-    } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao executar ação');
-    } finally { setAcao(false); }
-  }
+  const termo = busca.toLowerCase().trim();
+  const filtradas = assinaturas.filter(a => {
+    if (!termo) return true;
+    const nome     = (a.cliente_nome    || '').toLowerCase();
+    const cidade   = (a.cliente_cidade  || '').toLowerCase();
+    const endereco = (a.cliente_endereco|| '').toLowerCase();
+    const bairro   = (a.cliente_bairro  || '').toLowerCase();
+    return nome.includes(termo) || cidade.includes(termo) ||
+           endereco.includes(termo) || bairro.includes(termo);
+  });
 
   if (loading) return <Spinner />;
 
@@ -71,128 +47,128 @@ export default function Assinaturas() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Minhas assinaturas</h1>
-          <p className={styles.subtitle}>Gerencie suas entregas recorrentes</p>
+          <h1 className={styles.title}>Assinaturas</h1>
+          <p className={styles.subtitle}>
+            {filtradas.length} de {assinaturas.length} assinatura(s)
+          </p>
         </div>
-        <Button onClick={() => navigate('/')}>+ Nova assinatura</Button>
       </div>
 
       {erro && <Alert type="error">{erro}</Alert>}
 
-      {assinaturas.length === 0 ? (
-        <EmptyState
-          icon="📦"
-          title="Nenhuma assinatura ainda"
-          desc="Escolha seus produtos favoritos e configure sua primeira entrega recorrente."
-          action={<Button onClick={() => navigate('/')}>Ver catálogo</Button>}
+      <div className={styles.buscaWrap}>
+        <input
+          className={styles.busca}
+          placeholder="🔍 Buscar por nome, cidade, bairro ou endereço..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
         />
-      ) : (
-        <div className={styles.lista}>
-          {assinaturas.map(a => {
-            const sb = STATUS_BADGE[a.status] || STATUS_BADGE.ativa;
-            const metodo = ultimoPagamento[a.id];
-            return (
-              <Card key={a.id} className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <div className={styles.cardTopo}>
-                      <h3 className={styles.planoNome}>{a.plano_nome}</h3>
-                      <Badge color={sb.color}>{sb.label}</Badge>
-                    </div>
-                    <p className={styles.cardSub}>A cada {a.intervalo_dias} dias</p>
-                    {metodo && (
-                      <p className={styles.metodoPag}>
-                        {METODO_LABEL[metodo] || `💳 ${metodo}`}
-                      </p>
-                    )}
-                  </div>
-                  <div className={styles.actions}>
-                    {a.status === 'ativa' && (
-                      <Button size="sm" variant="secondary" onClick={() => navigate(`/assinaturas/${a.id}/editar`)}>
-                        Alterar
-                      </Button>
-                    )}
-                    {a.status === 'ativa' && (
-                      <Button size="sm" variant="ghost" onClick={() => setModal({ tipo: 'pausar', id: a.id })}>
-                        Pausar
-                      </Button>
-                    )}
-                    {a.status === 'pausada' && (
-                      <Button size="sm" variant="secondary" onClick={() => setModal({ tipo: 'reativar', id: a.id })}>
-                        Reativar
-                      </Button>
-                    )}
-                    {a.status !== 'cancelada' && (
-                      <Button size="sm" variant="danger" onClick={() => setModal({ tipo: 'cancelar', id: a.id })}>
-                        Cancelar
-                      </Button>
-                    )}
-                  </div>
-                </div>
+        {busca && (
+          <button className={styles.limparBusca} onClick={() => setBusca('')}>✕</button>
+        )}
+      </div>
 
-                <div className={styles.itens}>
-                  {(a.itens || []).map(item => (
-                    <div key={item.produto_id} className={styles.item}>
-                      <span className={styles.itemEmoji}>🛒</span>
-                      <span className={styles.itemNome}>{item.nome}</span>
-                      <span className={styles.itemQtd}>x{item.quantidade}</span>
-                      <span className={styles.itemPreco}>R$ {parseFloat(item.preco).toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
+      <div className={styles.filtros}>
+        {['', 'ativa', 'pausada', 'cancelada'].map(s => (
+          <button key={s} onClick={() => setFiltro(s)}
+            className={`${styles.filtroBtn} ${filtro === s ? styles.filtroAtivo : ''}`}
+          >
+            {s === '' ? 'Todas' : STATUS[s]?.label}
+          </button>
+        ))}
+      </div>
 
-                <div className={styles.cardFooter}>
-                  <div className={styles.footerInfo}>
-                    <span className={styles.footerLabel}>Próxima entrega</span>
-                    <span className={styles.footerVal}>
-                      {a.proxima_geracao
-                        ? new Date(a.proxima_geracao).toLocaleDateString('pt-BR')
-                        : '—'}
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+      {filtradas.length === 0 && (
+        <Card className={styles.vazio}>
+          <p>Nenhuma assinatura encontrada para "{busca}".</p>
+        </Card>
       )}
 
-      <Modal
-        open={!!modal}
-        onClose={() => setModal(null)}
-        title={
-          modal?.tipo === 'pausar'   ? 'Pausar assinatura'   :
-          modal?.tipo === 'reativar' ? 'Reativar assinatura' :
-          'Cancelar assinatura'
-        }
-      >
-        <div className={styles.modalContent}>
-          {modal?.tipo === 'pausar'   && <p>Sua assinatura será pausada e nenhum pedido será gerado até você reativar.</p>}
-          {modal?.tipo === 'reativar' && <p>Sua assinatura voltará a gerar pedidos normalmente.</p>}
-          {modal?.tipo === 'cancelar' && (
-            <>
-              <p>Tem certeza que deseja cancelar? Esta ação não pode ser desfeita.</p>
-              <textarea
-                className={styles.motivoInput}
-                placeholder="Motivo do cancelamento (opcional)"
-                value={motivo}
-                onChange={e => setMotivo(e.target.value)}
-                rows={3}
-              />
-            </>
-          )}
-          <div className={styles.modalActions}>
-            <Button variant="ghost" onClick={() => setModal(null)}>Voltar</Button>
-            <Button
-              variant={modal?.tipo === 'cancelar' ? 'danger' : 'primary'}
-              loading={acao}
-              onClick={executarAcao}
-            >
-              {modal?.tipo === 'pausar' ? 'Pausar' : modal?.tipo === 'reativar' ? 'Reativar' : 'Cancelar assinatura'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <div className={styles.lista}>
+        {filtradas.map(a => {
+          const est       = STATUS[a.status] || STATUS.ativa;
+          const expandida = aberta === a.id;
+
+          return (
+            <Card key={a.id} className={styles.card}>
+              <button className={styles.cardTop} onClick={() => setAberta(expandida ? null : a.id)}>
+                <div className={styles.cardId}>
+                  <span className={styles.cliente}>{a.cliente_nome}</span>
+                  <span className={styles.plano}>{a.plano_nome} · {a.intervalo_dias} dias</span>
+                  {(a.cliente_cidade || a.cliente_bairro) && (
+                    <span className={styles.localidade}>
+                      📍 {[a.cliente_bairro, a.cliente_cidade].filter(Boolean).join(', ')}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.cardTopRight}>
+                  <Badge color={est.color}>{est.label}</Badge>
+                  <span className={styles.seta}>{expandida ? '▲' : '▼'}</span>
+                </div>
+              </button>
+
+              {expandida && (
+                <div className={styles.detalhes}>
+                  <div className={styles.cardInfo}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Cliente</span>
+                      <span className={styles.infoVal}>{a.cliente_nome}</span>
+                      <span className={styles.infoSub}>{a.cliente_email} · {a.cliente_telefone}</span>
+                    </div>
+                    {a.cliente_endereco && (
+                      <div className={styles.infoItem}>
+                        <span className={styles.infoLabel}>Endereço</span>
+                        <span className={styles.infoVal}>
+                          {a.cliente_endereco}, {a.cliente_numero}
+                          {a.cliente_complemento ? ` ${a.cliente_complemento}` : ''}
+                        </span>
+                        <span className={styles.infoSub}>
+                          {a.cliente_bairro} — {a.cliente_cidade}/{a.cliente_estado}
+                        </span>
+                      </div>
+                    )}
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Plano</span>
+                      <span className={styles.infoVal}>{a.plano_nome} ({a.intervalo_dias} dias)</span>
+                      <span className={styles.infoSub}>Desconto: {parseFloat(a.desconto_pct).toFixed(0)}%</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Início</span>
+                      <span className={styles.infoVal}>{new Date(a.data_inicio).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Próxima geração</span>
+                      <span className={styles.infoVal}>
+                        {a.proxima_geracao ? new Date(a.proxima_geracao).toLocaleDateString('pt-BR') : '—'}
+                      </span>
+                    </div>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Ciclo atual</span>
+                      <span className={styles.infoVal}>{a.numero_ciclo_atual}</span>
+                    </div>
+                  </div>
+
+                  {a.motivo_cancelamento && (
+                    <div className={styles.motivo}>✕ Motivo do cancelamento: {a.motivo_cancelamento}</div>
+                  )}
+
+                  <div className={styles.itens}>
+                    <span className={styles.infoLabel}>Itens da assinatura</span>
+                    <ul className={styles.itensLista}>
+                      {a.itens.map(item => (
+                        <li key={item.produto_id} className={styles.item}>
+                          <span>{item.quantidade}× {item.nome}</span>
+                          <span className={styles.itemPreco}>R$ {parseFloat(item.preco).toFixed(2)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
