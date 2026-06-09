@@ -10,24 +10,14 @@
 .lista { display: flex; flex-direction: column; gap: 16px; }
 .card { display: flex; flex-direction: column; gap: 16px; padding: 20px; }
 
-/* Cabeçalho do card */
-.cardHeader {
-  display: flex; flex-direction: column; gap: 12px;
-}
-
-.cardTopo {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-}
+.cardHeader { display: flex; flex-direction: column; gap: 12px; }
+.cardTopo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .planoNome { font-family: var(--font-serif); font-size: 22px; }
 .cardSub { font-size: 13px; color: var(--text-3); }
 .metodoPag { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
 
-/* Botões de ação — em linha com quebra automática */
-.actions {
-  display: flex; flex-wrap: wrap; gap: 8px;
-}
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
-/* Itens */
 .itens { display: flex; flex-direction: column; gap: 8px; }
 .item {
   display: flex; align-items: center; gap: 10px;
@@ -39,7 +29,6 @@
 .itemQtd { font-size: 13px; color: var(--text-3); }
 .itemPreco { font-size: 14px; font-weight: 600; color: var(--brand-dark); }
 
-/* Rodapé */
 .cardFooter {
   display: flex; gap: 20px; padding-top: 12px;
   border-top: 1px solid var(--border); flex-wrap: wrap;
@@ -48,7 +37,6 @@
 .footerLabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
 .footerVal { font-size: 15px; font-weight: 600; }
 
-/* Modal */
 .modalContent { display: flex; flex-direction: column; gap: 16px; }
 .modalContent p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
 .motivoInput {
@@ -59,17 +47,9 @@
 .motivoInput:focus { border-color: var(--brand); }
 .modalActions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 
-/* Mobile */
 @media (max-width: 500px) {
   .title { font-size: 26px; }
   .card { padding: 16px; }
   .actions { gap: 6px; }
-  /* Botões menores no mobile */
   .actions button { font-size: 12px !important; padding: 6px 12px !important; }
 }
-.buscaWrap { position: relative; margin-bottom: 16px; }
-.busca { width: 100%; padding: 10px 40px 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 14px; outline: none; transition: border-color var(--transition); }
-.busca:focus { border-color: var(--brand); }
-.limparBusca { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-3); font-size: 14px; }
-.localidade { font-size: 12px; color: var(--text-3); }
-.vazio { text-align: center; padding: 32px; color: var(--text-3); }
