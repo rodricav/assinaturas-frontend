@@ -4,40 +4,55 @@ import { getProdutosAdmin, criarProduto, editarProduto, ajustarEstoque, getCateg
 import { Card, Button, Input, Badge, Spinner, Alert, Modal } from '../../components/ui';
 import styles from './Produtos.module.css';
 
-export default function Produtos() {
-  const [produtos, setProdutos] = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [erro, setErro]         = useState('');
-  const [modal, setModal]       = useState(null); // 'criar' | 'estoque'
-  const [sel, setSel]           = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const [categorias, setCategorias] = useState([]);
+const formVazio = { nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true, categoria_id: '' };
 
-  const [form, setForm] = useState({ nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true, categoria_id: '' });
-  const [estoqueQtd, setEstoqueQtd]   = useState('');
-  const [estoqueObs, setEstoqueObs]   = useState('');
-  const [estoqueMot, setEstoqueMot]   = useState('entrada_manual');
+export default function Produtos() {
+  const [produtos, setProdutos]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [erro, setErro]             = useState('');
+  const [modal, setModal]           = useState(null);
+  const [sel, setSel]               = useState(null);
+  const [salvando, setSalvando]     = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [preview, setPreview]       = useState('');
+
+  const [form, setForm]             = useState(formVazio);
+  const [estoqueQtd, setEstoqueQtd] = useState('');
+  const [estoqueObs, setEstoqueObs] = useState('');
+  const [estoqueMot, setEstoqueMot] = useState('entrada_manual');
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   async function carregar() {
     try {
-      const { data } = await getProdutosAdmin();
-      setProdutos(data);
+      const [{ data: prods }, { data: cats }] = await Promise.all([
+        getProdutosAdmin(),
+        getCategorias(),
+      ]);
+      setProdutos(prods);
+      setCategorias(cats);
     } catch { setErro('Erro ao carregar produtos'); }
     finally { setLoading(false); }
   }
 
-  useEffect(() => { carregar(); getCategorias().then(r => setCategorias(r.data)).catch(() => {}); }, []);
+  useEffect(() => { carregar(); }, []);
 
   function abrirCriar() {
-    setForm({ nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true });
-    setSel(null); setModal('criar');
+    setForm(formVazio); setSel(null); setPreview(''); setErro(''); setModal('criar');
   }
 
   function abrirEditar(p) {
-    setForm({ nome: p.nome, descricao: p.descricao || '', preco: p.preco, foto_url: p.foto_url || '', ordem: p.ordem, ativo: p.ativo, categoria_id: p.categoria_id || '' });
-    setSel(p); setModal('criar');
+    setForm({
+      nome:        p.nome,
+      descricao:   p.descricao || '',
+      preco:       p.preco,
+      foto_url:    p.foto_url || '',
+      ordem:       p.ordem ?? 0,
+      ativo:       p.ativo,
+      categoria_id: p.categoria_id || '',
+    });
+    setPreview(p.foto_url || '');
+    setSel(p); setErro(''); setModal('criar');
   }
 
   function abrirEstoque(p) {
@@ -47,12 +62,26 @@ export default function Produtos() {
   async function salvarProduto(e) {
     e.preventDefault(); setSalvando(true); setErro('');
     try {
-      const dados = { ...form, preco: parseFloat(form.preco), ordem: parseInt(form.ordem) };
+      const dados = {
+        nome:        form.nome.trim(),
+        descricao:   form.descricao.trim() || null,
+        preco:       parseFloat(form.preco),
+        foto_url:    form.foto_url.trim() || null,
+        ordem:       parseInt(form.ordem) || 0,
+        ativo:       form.ativo,
+        categoria_id: form.categoria_id || null,  // null em vez de string vazia
+      };
+
+      if (isNaN(dados.preco) || dados.preco <= 0) {
+        setErro('Informe um preço válido'); setSalvando(false); return;
+      }
+
       if (sel) await editarProduto(sel.id, dados);
       else     await criarProduto(dados);
+
       setModal(null); await carregar();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao salvar produto');
+      setErro(err.response?.data?.erro || err.response?.data?.message || 'Erro ao salvar produto');
     } finally { setSalvando(false); }
   }
 
@@ -60,6 +89,7 @@ export default function Produtos() {
     e.preventDefault(); setSalvando(true); setErro('');
     try {
       const qtd = parseInt(estoqueQtd);
+      if (isNaN(qtd)) { setErro('Quantidade inválida'); setSalvando(false); return; }
       await ajustarEstoque(sel.id, { quantidade: qtd, motivo: estoqueMot, observacao: estoqueObs });
       setModal(null); await carregar();
     } catch (err) {
@@ -85,13 +115,17 @@ export default function Produtos() {
         {produtos.map(p => (
           <Card key={p.id} className={styles.card}>
             <div className={styles.cardImg}>
-              {p.foto_url ? <img src={p.foto_url} alt={p.nome} /> : <span>🛒</span>}
+              {p.foto_url
+                ? <img src={p.foto_url} alt={p.nome} onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex'; }} />
+                : null}
+              <span style={{ display: p.foto_url ? 'none' : 'flex' }}>🛒</span>
             </div>
             <div className={styles.cardBody}>
               <div className={styles.cardTop}>
                 <h3 className={styles.prodNome}>{p.nome}</h3>
                 <Badge color={p.ativo ? 'green' : 'gray'}>{p.ativo ? 'Ativo' : 'Inativo'}</Badge>
               </div>
+              {p.categoria_nome && <p className={styles.catNome}>{p.categoria_icone} {p.categoria_nome}</p>}
               <p className={styles.prodPreco}>R$ {parseFloat(p.preco).toFixed(2)}</p>
               <div className={styles.estoque}>
                 <span className={styles.estoqueNum}>{p.estoque_atual}</span>
@@ -110,24 +144,50 @@ export default function Produtos() {
       {/* Modal criar/editar */}
       <Modal open={modal === 'criar'} onClose={() => setModal(null)} title={sel ? 'Editar produto' : 'Novo produto'}>
         <form onSubmit={salvarProduto} className={styles.form}>
+          {erro && <Alert type="error">{erro}</Alert>}
+
           <Input label="Nome" value={form.nome} onChange={e => set('nome', e.target.value)} required />
           <Input label="Descrição" value={form.descricao} onChange={e => set('descricao', e.target.value)} />
+
           <div className={styles.row2}>
-            <Input label="Preço (R$)" type="number" step="0.01" value={form.preco} onChange={e => set('preco', e.target.value)} required />
-            <Input label="Ordem de exibição" type="number" value={form.ordem} onChange={e => set('ordem', e.target.value)} />
+            <Input label="Preço (R$)" type="number" step="0.01" min="0.01"
+              value={form.preco} onChange={e => set('preco', e.target.value)} required />
+            <Input label="Ordem de exibição" type="number" min="0"
+              value={form.ordem} onChange={e => set('ordem', e.target.value)} />
           </div>
-          <Input label="URL da foto" value={form.foto_url} onChange={e => set('foto_url', e.target.value)} placeholder="https://..." />
+
+          {/* URL da foto com preview */}
+          <div className={styles.fotoWrap}>
+            <Input label="URL da foto" value={form.foto_url}
+              onChange={e => { set('foto_url', e.target.value); setPreview(e.target.value); }}
+              placeholder="https://..." />
+            {preview && (
+              <div className={styles.fotoPreview}>
+                <img
+                  src={preview} alt="preview"
+                  onError={() => setPreview('')}
+                />
+              </div>
+            )}
+          </div>
+
           <div className={styles.field}>
             <label className={styles.fieldLabel}>Categoria</label>
-            <select className={styles.select} value={form.categoria_id} onChange={e => set('categoria_id', e.target.value || null)}>
+            <select className={styles.select} value={form.categoria_id}
+              onChange={e => set('categoria_id', e.target.value)}>
               <option value="">Sem categoria</option>
-              {categorias.map(c => <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>)}
+              {categorias.map(c => (
+                <option key={c.id} value={c.id}>{c.icone} {c.nome}</option>
+              ))}
             </select>
           </div>
+
           <label className={styles.checkLabel}>
-            <input type="checkbox" checked={form.ativo} onChange={e => set('ativo', e.target.checked)} />
+            <input type="checkbox" checked={form.ativo}
+              onChange={e => set('ativo', e.target.checked)} />
             Produto ativo no catálogo
           </label>
+
           <div className={styles.modalActions}>
             <Button type="button" variant="ghost" onClick={() => setModal(null)}>Cancelar</Button>
             <Button type="submit" loading={salvando}>Salvar</Button>
@@ -147,13 +207,15 @@ export default function Produtos() {
           />
           <div className={styles.field}>
             <label className={styles.fieldLabel}>Motivo</label>
-            <select className={styles.select} value={estoqueMot} onChange={e => setEstoqueMot(e.target.value)}>
+            <select className={styles.select} value={estoqueMot}
+              onChange={e => setEstoqueMot(e.target.value)}>
               <option value="entrada_manual">Entrada manual</option>
               <option value="ajuste_manual">Ajuste manual</option>
               <option value="devolucao">Devolução</option>
             </select>
           </div>
-          <Input label="Observação" value={estoqueObs} onChange={e => setEstoqueObs(e.target.value)} />
+          <Input label="Observação" value={estoqueObs}
+            onChange={e => setEstoqueObs(e.target.value)} />
           <div className={styles.modalActions}>
             <Button type="button" variant="ghost" onClick={() => setModal(null)}>Cancelar</Button>
             <Button type="submit" loading={salvando}>Salvar</Button>
