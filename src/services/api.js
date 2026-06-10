@@ -94,3 +94,8 @@ export const buscarCep = async (cep) => {
   } catch { return null; }
 };
 
+
+// ── Avaliações ────────────────────────────────────────────────────────────────
+export const criarAvaliacao    = (data)     => api.post('/avaliacoes', data);
+export const getMinhaAvaliacao = (pedidoId) => api.get(`/avaliacoes/minha/${pedidoId}`);
+export const getAvaliacoesAdmin = ()        => api.get('/avaliacoes/admin');

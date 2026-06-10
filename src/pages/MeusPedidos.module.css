@@ -100,3 +100,58 @@
   .infoGrid { grid-template-columns: 1fr; }
   .cardHeader { flex-wrap: wrap; gap: 8px; }
 }
+
+/* Avaliação */
+.avaliacaoWrap { padding-top: 8px; border-top: 1px solid var(--border); }
+.btnAvaliar {
+  background: none; border: 1.5px solid var(--brand);
+  color: var(--brand); padding: 8px 16px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; transition: all var(--transition);
+}
+.btnAvaliar:hover { background: var(--brand); color: #fff; }
+.avaliacaoFeita { font-size: 13px; color: var(--text-3); }
+
+/* Modal avaliação */
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modalAval {
+  background: var(--surface); border-radius: var(--radius-lg);
+  padding: 32px; max-width: 420px; width: 100%;
+  box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: 16px;
+}
+.modalAvalTitulo { font-family: var(--font-serif); font-size: 22px; margin: 0; }
+.modalAvalSub { font-size: 14px; color: var(--text-3); margin: -8px 0 0; }
+
+.estrelas { display: flex; gap: 8px; justify-content: center; }
+.estrela {
+  font-size: 40px; background: none; border: none;
+  color: #ddd; transition: all 0.15s; line-height: 1;
+}
+.estrelaAtiva { color: #f59e0b; transform: scale(1.1); }
+.estrela:hover { color: #f59e0b; transform: scale(1.15); }
+
+.notaLabel { text-align: center; font-size: 15px; font-weight: 600; margin: -8px 0 0; }
+
+.comentarioInput {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: var(--font-sans); font-size: 14px;
+  resize: vertical; outline: none; transition: border-color var(--transition);
+  box-sizing: border-box;
+}
+.comentarioInput:focus { border-color: var(--brand); }
+
+.modalAvalAcoes { display: flex; gap: 10px; justify-content: flex-end; }
+.btnCancelar {
+  padding: 10px 20px; background: none; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-size: 14px; color: var(--text-2);
+}
+.btnEnviar {
+  padding: 10px 24px; background: var(--brand); border: none;
+  border-radius: var(--radius); font-size: 14px; font-weight: 600;
+  color: #fff; transition: background var(--transition);
+}
+.btnEnviar:hover:not(:disabled) { background: var(--brand-dark); }
+.btnEnviar:disabled { opacity: 0.5; }

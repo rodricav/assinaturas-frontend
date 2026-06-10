@@ -1,0 +1,42 @@
+/* src/components/ProximaEntrega.module.css */
+.card { display: flex; flex-direction: column; gap: 14px; border-left: 4px solid var(--brand); }
+
+.header { display: flex; align-items: flex-start; gap: 12px; }
+.icon { font-size: 28px; flex-shrink: 0; }
+.titulo { font-family: var(--font-serif); font-size: 18px; margin: 0; }
+.plano { font-size: 13px; color: var(--text-3); margin: 2px 0 0; }
+.urgente {
+  margin-left: auto; flex-shrink: 0;
+  background: #fff3cd; color: #856404;
+  font-size: 12px; font-weight: 600;
+  padding: 4px 10px; border-radius: 99px;
+}
+
+.data {
+  font-size: 20px; font-weight: 700; color: var(--brand-dark);
+  text-transform: capitalize;
+}
+
+.pedidoAtivo {
+  background: var(--bg); border-radius: var(--radius);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.pedidoHeader { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pedidoNum { font-family: 'Courier New', monospace; font-weight: 700; font-size: 13px; color: var(--brand-dark); }
+.btnPagar {
+  display: inline-flex; align-items: center;
+  background: var(--brand); color: #fff;
+  padding: 10px 18px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 600; text-decoration: none;
+  transition: background var(--transition);
+}
+.btnPagar:hover { background: var(--brand-dark); }
+
+.itens { display: flex; flex-direction: column; gap: 6px; }
+.item { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.item:last-of-type { border-bottom: none; }
+.itemNome { color: var(--text-2); }
+.itemQtd { font-weight: 600; color: var(--brand-dark); }
+.maisItens { font-size: 12px; color: var(--text-3); margin: 0; }
+
+.acoes { display: flex; gap: 8px; flex-wrap: wrap; }
