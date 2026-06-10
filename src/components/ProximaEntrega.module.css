@@ -4,12 +4,12 @@
 .card {
   background: var(--surface);
   border: 1.5px solid var(--border);
+  border-left: 4px solid var(--brand);
   border-radius: var(--radius-lg, 12px);
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  border-left: 4px solid var(--brand);
+  gap: 16px;
 }
 
 .topRow {
@@ -18,124 +18,98 @@
   align-items: flex-start;
   gap: 12px;
 }
-
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.icon { font-size: 24px; flex-shrink: 0; }
-
-.titulo {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text);
-}
-
-.plano {
-  font-size: 12px;
-  color: var(--text-3);
-  margin: 3px 0 0;
-}
-
+.titleRow { display: flex; align-items: center; gap: 12px; }
+.icon { font-size: 22px; flex-shrink: 0; }
+.titulo { font-size: 15px; font-weight: 600; margin: 0; color: var(--text); }
+.plano { font-size: 12px; color: var(--text-3); margin: 3px 0 0; }
 .urgente {
-  background: #fff3cd;
-  color: #856404;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 99px;
-  white-space: nowrap;
+  background: #fff3cd; color: #856404;
+  font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 99px; white-space: nowrap; flex-shrink: 0;
+}
+
+/* Datas lado a lado */
+.datas {
+  display: flex;
+  gap: 0;
+  background: var(--bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.dataItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+}
+.dataDiv {
+  width: 1px;
+  background: var(--border);
   flex-shrink: 0;
 }
-
-.data {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--brand-dark);
-  text-transform: capitalize;
-  margin: 0;
+.dataLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  font-weight: 600;
 }
+.dataValor {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: capitalize;
+}
+.dataEntrega { color: var(--brand-dark); }
 
+/* Pedido ativo */
 .pedidoBox {
   background: var(--bg);
   border-radius: var(--radius);
   padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: flex; flex-direction: column; gap: 10px;
 }
-
-.pedidoRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
+.pedidoRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pedidoNum {
   font-family: 'Courier New', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--brand-dark);
+  font-size: 13px; font-weight: 700; color: var(--brand-dark);
 }
-
 .btnPagar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brand);
-  color: #fff;
-  padding: 11px 20px;
-  border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand); color: #fff;
+  padding: 10px 18px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 600; text-decoration: none;
   transition: background var(--transition);
 }
 .btnPagar:hover { background: var(--brand-dark); }
 
-.itens {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
+/* Itens */
+.itens { display: flex; flex-direction: column; gap: 6px; }
 .item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--text-2);
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--text-2);
+  padding: 4px 0; border-bottom: 1px solid var(--border);
 }
 .item:last-of-type { border-bottom: none; }
-
 .itemQtd { font-weight: 600; color: var(--brand-dark); }
 .maisItens { font-size: 12px; color: var(--text-3); margin: 0; }
 
+/* Rodapé */
 .rodape {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
+  display: flex; gap: 16px; flex-wrap: wrap;
+  padding-top: 4px; border-top: 1px solid var(--border);
 }
-
 .btnLink {
-  background: none;
-  border: none;
-  font-size: 13px;
-  color: var(--brand);
-  font-weight: 500;
-  padding: 0;
-  cursor: pointer;
+  background: none; border: none;
+  font-size: 13px; color: var(--brand); font-weight: 500;
+  padding: 0; cursor: pointer;
 }
 .btnLink:hover { text-decoration: underline; }
 
 @media (max-width: 500px) {
   .card { padding: 16px; }
-  .data { font-size: 16px; }
+  .datas { flex-direction: column; }
+  .dataDiv { width: auto; height: 1px; }
 }
