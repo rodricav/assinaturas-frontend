@@ -22,7 +22,6 @@ import Categorias          from './pages/admin/Categorias';
 import Zonas               from './pages/admin/Zonas';
 import Assinantes          from './pages/admin/Assinantes';
 import AssinaturasAdmin    from './pages/admin/Assinaturas';
-import Proximos7Dias       from './pages/admin/Proximos7Dias';
 import Estoque7Dias        from './pages/admin/Estoque7Dias';
 import Configuracoes       from './pages/admin/Configuracoes';
 
@@ -62,7 +61,6 @@ export default function App() {
               <Route index                     element={<Dashboard />} />
               <Route path="pedidos"            element={<Pedidos />} />
               <Route path="pedidos/:id/editar" element={<EditarPedido />} />
-              <Route path="proximos7dias"      element={<Proximos7Dias />} />
               <Route path="estoque7dias"       element={<Estoque7Dias />} />
               <Route path="produtos"           element={<Produtos />} />
               <Route path="categorias"         element={<Categorias />} />
