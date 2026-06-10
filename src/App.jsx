@@ -1,6 +1,7 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ConfigProvider } from './context/ConfigContext';
 import './styles/global.css';
 
 import Login               from './pages/Login';
@@ -21,7 +22,9 @@ import Categorias          from './pages/admin/Categorias';
 import Zonas               from './pages/admin/Zonas';
 import Assinantes          from './pages/admin/Assinantes';
 import AssinaturasAdmin    from './pages/admin/Assinaturas';
+import Proximos7Dias       from './pages/admin/Proximos7Dias';
 import Estoque7Dias        from './pages/admin/Estoque7Dias';
+import Configuracoes       from './pages/admin/Configuracoes';
 
 function RotaCliente({ children }) {
   const { logado, isAdmin } = useAuth();
@@ -39,37 +42,41 @@ function RotaAdmin({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login"       element={<Login />} />
-          <Route path="/admin/login" element={<LoginAdmin />} />
+    <ConfigProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login"       element={<Login />} />
+            <Route path="/admin/login" element={<LoginAdmin />} />
 
-          <Route path="/" element={<RotaCliente><ClienteLayout /></RotaCliente>}>
-            <Route index                     element={<Catalogo />} />
-            <Route path="assinaturas"        element={<Assinaturas />} />
-            <Route path="assinaturas/:id/editar" element={<EditarAssinatura />} />
-            <Route path="pedidos"            element={<MeusPedidos />} />
-            <Route path="assinar"            element={<ConfirmarAssinatura />} />
-            <Route path="perfil"             element={<MeuPerfil />} />
-          </Route>
+            <Route path="/" element={<RotaCliente><ClienteLayout /></RotaCliente>}>
+              <Route index                         element={<Catalogo />} />
+              <Route path="assinaturas"            element={<Assinaturas />} />
+              <Route path="assinaturas/:id/editar" element={<EditarAssinatura />} />
+              <Route path="pedidos"                element={<MeusPedidos />} />
+              <Route path="assinar"                element={<ConfirmarAssinatura />} />
+              <Route path="perfil"                 element={<MeuPerfil />} />
+            </Route>
 
-          <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
-            <Route index                     element={<Dashboard />} />
-            <Route path="pedidos"            element={<Pedidos />} />
-            <Route path="pedidos/:id/editar" element={<EditarPedido />} />
-            <Route path="estoque7dias"       element={<Estoque7Dias />} />
-            <Route path="produtos"           element={<Produtos />} />
-            <Route path="categorias"         element={<Categorias />} />
-            <Route path="zonas"              element={<Zonas />} />
-            <Route path="assinantes"         element={<Assinantes />} />
-            <Route path="assinaturas"        element={<AssinaturasAdmin />} />
-          </Route>
+            <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
+              <Route index                     element={<Dashboard />} />
+              <Route path="pedidos"            element={<Pedidos />} />
+              <Route path="pedidos/:id/editar" element={<EditarPedido />} />
+              <Route path="proximos7dias"      element={<Proximos7Dias />} />
+              <Route path="estoque7dias"       element={<Estoque7Dias />} />
+              <Route path="produtos"           element={<Produtos />} />
+              <Route path="categorias"         element={<Categorias />} />
+              <Route path="zonas"              element={<Zonas />} />
+              <Route path="assinantes"         element={<Assinantes />} />
+              <Route path="assinaturas"        element={<AssinaturasAdmin />} />
+              <Route path="configuracoes"      element={<Configuracoes />} />
+            </Route>
 
-          <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-          <Route path="*"      element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+            <Route path="*"      element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ConfigProvider>
   );
 }

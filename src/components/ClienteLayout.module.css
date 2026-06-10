@@ -89,7 +89,7 @@
 
   /* Compensa a topbar: brand ~42px + nav ~54px = ~96px + margem */
   .main {
-    margin-top: 116px;
+    margin-top: 96px;
     padding: 16px;
     flex: 1;
     min-width: 0;
@@ -98,3 +98,4 @@
     overflow-x: hidden;
   }
 }
+.brandLogoImg { height: 28px; object-fit: contain; max-width: 100px; flex-shrink: 0; }

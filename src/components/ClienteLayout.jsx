@@ -1,18 +1,20 @@
 // src/components/ClienteLayout.jsx
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import styles from './ClienteLayout.module.css';
 
 const NAV = [
-  { to: '/',           label: 'Catálogo',          icon: '🛒' },
-  { to: '/assinaturas', label: 'Assinaturas',      icon: '🔄' },
-  { to: '/pedidos',    label: 'Meus pedidos',       icon: '📦' },
-  { to: '/perfil',     label: 'Meu perfil',         icon: '👤' },
+  { to: '/',            label: 'Catálogo',     icon: '🛒' },
+  { to: '/assinaturas', label: 'Assinaturas',  icon: '🔄' },
+  { to: '/pedidos',     label: 'Meus pedidos', icon: '📦' },
+  { to: '/perfil',      label: 'Meu perfil',   icon: '👤' },
 ];
 
 export default function ClienteLayout() {
   const { usuario, sair } = useAuth();
-  const navigate = useNavigate();
+  const { config }        = useConfig();
+  const navigate          = useNavigate();
 
   function handleSair() { sair(); navigate('/login'); }
 
@@ -20,8 +22,11 @@ export default function ClienteLayout() {
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <span className={styles.brandIcon}>🌿</span>
-          <span className={styles.brandName}>AssínaSaas</span>
+          {config.logo_url
+            ? <img src={config.logo_url} alt={config.nome_negocio} className={styles.brandLogoImg} />
+            : <span className={styles.brandIcon}>🌿</span>
+          }
+          <span className={styles.brandName}>{config.nome_negocio || 'AssínaSaas'}</span>
         </div>
         <nav className={styles.nav}>
           {NAV.map(({ to, label, icon }) => (
@@ -29,7 +34,7 @@ export default function ClienteLayout() {
               className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}
             >
               <span className={styles.navIcon}>{icon}</span>
-              <span>{label}</span>
+              <span className={styles.navLabel}>{label}</span>
             </NavLink>
           ))}
         </nav>

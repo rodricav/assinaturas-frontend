@@ -1,22 +1,26 @@
 // src/components/AdminLayout.jsx
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import styles from './AdminLayout.module.css';
 
 const NAV = [
-  { to: '/painel',              label: 'Dashboard',       icon: '📊', end: true },
-  { to: '/painel/pedidos',      label: 'Pedidos',         icon: '📦' },
-  { to: '/painel/estoque7dias', label: 'Estoque 7 dias',  icon: '📊' },
-  { to: '/painel/produtos',     label: 'Produtos',        icon: '🛒' },
-  { to: '/painel/categorias',   label: 'Categorias',      icon: '🏷️' },
-  { to: '/painel/zonas',        label: 'Zonas CEP',       icon: '📍' },
-  { to: '/painel/assinantes',   label: 'Assinantes',      icon: '👥' },
-  { to: '/painel/assinaturas',  label: 'Assinaturas',     icon: '🔁' },
+  { to: '/painel',                label: 'Dashboard',      icon: '📊', end: true },
+  { to: '/painel/pedidos',        label: 'Pedidos',        icon: '📦' },
+  { to: '/painel/proximos7dias',  label: 'Próx. 7 dias',   icon: '📅' },
+  { to: '/painel/estoque7dias',   label: 'Estoque 7 dias', icon: '📊' },
+  { to: '/painel/produtos',       label: 'Produtos',       icon: '🛒' },
+  { to: '/painel/categorias',     label: 'Categorias',     icon: '🏷️' },
+  { to: '/painel/zonas',          label: 'Zonas CEP',      icon: '📍' },
+  { to: '/painel/assinantes',     label: 'Assinantes',     icon: '👥' },
+  { to: '/painel/assinaturas',    label: 'Assinaturas',    icon: '🔄' },
+  { to: '/painel/configuracoes',  label: 'Configurações',  icon: '⚙️' },
 ];
 
 export default function AdminLayout() {
   const { usuario, sair } = useAuth();
-  const navigate = useNavigate();
+  const { config }        = useConfig();
+  const navigate          = useNavigate();
 
   function handleSair() { sair(); navigate('/admin/login'); }
 
@@ -24,7 +28,10 @@ export default function AdminLayout() {
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <span>⚙️</span>
+          {config.logo_url
+            ? <img src={config.logo_url} alt={config.nome_negocio} className={styles.brandLogo} />
+            : <span>⚙️</span>
+          }
           <span className={styles.brandName}>Admin</span>
         </div>
         <nav className={styles.nav}>
