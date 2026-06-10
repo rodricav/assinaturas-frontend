@@ -4,31 +4,56 @@
 .voltar:hover { color: var(--brand); }
 .header { margin-bottom: 20px; }
 .title { font-family: var(--font-serif); font-size: 32px; }
-.subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
+.subtitle { color: var(--text-3); font-size: 14px; margin-top: 6px; }
 
-.layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; margin-top: 20px; align-items: start; }
-.secTitle { font-size: 14px; font-weight: 600; color: var(--text-2); margin-bottom: 14px; }
+.layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; margin-top: 20px; align-items: start; }
+.secTitle { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.04em; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+/* Grid de produtos */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 .prodCard { padding: 0; overflow: hidden; }
-.prodImg { height: 120px; background: var(--brand-pale); display: flex; align-items: center; justify-content: center; font-size: 36px; }
+.prodImg { height: 110px; background: var(--brand-pale); display: flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden; }
 .prodImg img { width: 100%; height: 100%; object-fit: cover; }
-.prodInfo { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.prodNome { font-weight: 600; font-size: 13px; }
+.prodInfo { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.prodNome { font-weight: 600; font-size: 13px; margin: 0; }
 .prodPreco { font-size: 15px; font-weight: 700; color: var(--brand-dark); }
-
 .qtdCtrl { display: flex; align-items: center; gap: 8px; }
-.qtdBtn { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-light); border: none; font-size: 16px; color: var(--brand-dark); }
-.qtdNum { font-weight: 600; min-width: 18px; text-align: center; font-size: 14px; }
+.qtdBtn { width: 28px; height: 28px; border-radius: 50%; background: var(--brand-light); border: none; font-size: 16px; color: var(--brand-dark); font-weight: 600; }
+.qtdNum { font-weight: 700; min-width: 20px; text-align: center; font-size: 15px; }
 
+/* Aside resumo */
 .aside { position: sticky; top: 24px; }
 .resumo { display: flex; flex-direction: column; gap: 14px; }
-.vazio { font-size: 13px; color: var(--text-3); text-align: center; padding: 16px 0; }
+
+/* Endereço */
+.enderecoBox {
+  background: var(--bg); border-radius: var(--radius);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+  border: 1.5px solid var(--border);
+}
+.enderecoHeader { display: flex; justify-content: space-between; align-items: center; }
+.enderecoLabel { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.btnTrocar { background: none; border: none; font-size: 12px; color: var(--brand); font-weight: 500; }
+.btnTrocar:hover { text-decoration: underline; }
+.enderecoInfo { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--text-2); }
+.enderecoInfo strong { color: var(--text); font-size: 13px; }
+.enderecoFrete { font-size: 12px; color: var(--brand-dark); font-weight: 500; margin-top: 2px; }
+
+/* Itens */
 .itens { display: flex; flex-direction: column; gap: 8px; }
 .itemResumo { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .itemResumo:last-child { border-bottom: none; }
 .itemNome { color: var(--text-2); }
-.itemQtd { font-weight: 600; }
+.itemVal { font-weight: 600; color: var(--text); }
+
+/* Totais */
+.totais { display: flex; flex-direction: column; border-top: 1px solid var(--border); padding-top: 10px; }
+.totalRow { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; color: var(--text-2); }
+.desconto { color: var(--brand); }
+.totalFinal { font-weight: 700; font-size: 15px; color: var(--text); border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px; }
+.semEnd { color: var(--text-3); font-size: 12px; }
+
+.vazio { font-size: 13px; color: var(--text-3); text-align: center; padding: 8px 0; }
 
 @media (max-width: 700px) {
   .layout { grid-template-columns: 1fr; }
