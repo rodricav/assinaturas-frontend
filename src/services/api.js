@@ -31,11 +31,12 @@ export const cadastrar = (data) => api.post('/clientes', data);
 export const getPerfil = ()     => api.get('/clientes/me');
 
 // ── Produtos ────────────────────────────────────────────────────────────────
-export const getProdutos      = ()         => api.get('/produtos');
-export const getProdutosAdmin = ()         => api.get('/produtos/admin');
-export const criarProduto     = (data)     => api.post('/produtos', data);
-export const editarProduto    = (id, data) => api.patch(`/produtos/${id}`, data);
-export const ajustarEstoque   = (id, data) => api.patch(`/produtos/${id}/estoque`, data);
+export const getProdutos          = ()         => api.get('/produtos');
+export const getProdutosAdmin     = ()         => api.get('/produtos/admin');
+export const criarProduto         = (data)     => api.post('/produtos', data);
+export const editarProduto        = (id, data) => api.patch(`/produtos/${id}`, data);
+export const ajustarEstoque       = (id, data) => api.patch(`/produtos/${id}/estoque`, data);
+export const getPedidosPorProduto = (id)       => api.get(`/admin/produtos/${id}/pedidos`);
 
 // ── Planos ──────────────────────────────────────────────────────────────────
 export const getPlanos = () => api.get('/admin/planos').catch(() =>
@@ -51,17 +52,17 @@ export const reativarAssinatura   = (id)       => api.patch(`/assinaturas/${id}/
 export const cancelarAssinatura   = (id, data) => api.patch(`/assinaturas/${id}/cancelar`, data);
 
 // ── Pedidos ─────────────────────────────────────────────────────────────────
-export const getPedidos      = (params) => api.get('/pedidos', { params });
+export const getPedidos      = (params)   => api.get('/pedidos', { params });
 export const avancarEstagio  = (id, data) => api.patch(`/pedidos/${id}/estagio`, data);
 
 // ── Admin ────────────────────────────────────────────────────────────────────
-export const getDashboard  = ()         => api.get('/admin/dashboard');
-export const getZonas      = ()         => api.get('/admin/zonas');
-export const criarZona     = (data)     => api.post('/admin/zonas', data);
-export const editarZona    = (id, data) => api.patch(`/admin/zonas/${id}`, data);
-export const getAssinantes = ()         => api.get('/admin/assinantes');
-export const getAssinaturasAdmin = (params) => api.get('/admin/assinaturas', { params });
-export const rodarScheduler = ()        => api.post('/admin/dev/rodar-scheduler');
+export const getDashboard        = ()         => api.get('/admin/dashboard');
+export const getZonas            = ()         => api.get('/admin/zonas');
+export const criarZona           = (data)     => api.post('/admin/zonas', data);
+export const editarZona          = (id, data) => api.patch(`/admin/zonas/${id}`, data);
+export const getAssinantes       = ()         => api.get('/admin/assinantes');
+export const getAssinaturasAdmin = (params)   => api.get('/admin/assinaturas', { params });
+export const rodarScheduler      = ()         => api.post('/admin/dev/rodar-scheduler');
 
 export default api;
 
@@ -76,11 +77,11 @@ export const criarCategoria   = (data)     => api.post('/categorias', data);
 export const editarCategoria  = (id, data) => api.patch(`/categorias/${id}`, data);
 
 // ── Endereços ────────────────────────────────────────────────────────────────
-export const getEnderecos       = (clienteId)    => api.get('/enderecos', { params: clienteId ? { cliente_id: clienteId } : {} });
-export const criarEndereco      = (data)         => api.post('/enderecos', data);
-export const editarEndereco     = (id, data)     => api.patch(`/enderecos/${id}`, data);
-export const deletarEndereco    = (id)           => api.delete(`/enderecos/${id}`);
-export const tornarPrincipal    = (id)           => api.patch(`/enderecos/${id}/principal`);
+export const getEnderecos    = (clienteId) => api.get('/enderecos', { params: clienteId ? { cliente_id: clienteId } : {} });
+export const criarEndereco   = (data)      => api.post('/enderecos', data);
+export const editarEndereco  = (id, data)  => api.patch(`/enderecos/${id}`, data);
+export const deletarEndereco = (id)        => api.delete(`/enderecos/${id}`);
+export const tornarPrincipal = (id)        => api.patch(`/enderecos/${id}/principal`);
 
 // ── ViaCEP ───────────────────────────────────────────────────────────────────
 export const buscarCep = async (cep) => {
@@ -94,8 +95,7 @@ export const buscarCep = async (cep) => {
   } catch { return null; }
 };
 
-
 // ── Avaliações ────────────────────────────────────────────────────────────────
-export const criarAvaliacao    = (data)     => api.post('/avaliacoes', data);
-export const getMinhaAvaliacao = (pedidoId) => api.get(`/avaliacoes/minha/${pedidoId}`);
-export const getAvaliacoesAdmin = ()        => api.get('/avaliacoes/admin');
+export const criarAvaliacao     = (data)      => api.post('/avaliacoes', data);
+export const getMinhaAvaliacao  = (pedidoId)  => api.get(`/avaliacoes/minha/${pedidoId}`);
+export const getAvaliacoesAdmin = ()          => api.get('/avaliacoes/admin');
