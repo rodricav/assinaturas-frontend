@@ -11,7 +11,6 @@ import Assinaturas         from './pages/Assinaturas';
 import ConfirmarAssinatura from './pages/ConfirmarAssinatura';
 import MeusPedidos         from './pages/MeusPedidos';
 import EditarAssinatura       from './pages/EditarAssinatura';
-import EditarPedidoCliente   from './pages/EditarPedidoCliente';
 import MeuPerfil               from './pages/MeuPerfil';
 import EditarPedidoCliente     from './pages/EditarPedidoCliente';
 import PedidoAvulso            from './pages/PedidoAvulso';
