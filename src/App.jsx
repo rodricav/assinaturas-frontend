@@ -52,18 +52,15 @@ export default function App() {
             <Route path="/admin/login" element={<LoginAdmin />} />
 
             <Route path="/" element={<RotaCliente><ClienteLayout /></RotaCliente>}>
-              <Route index                         element={<Catalogo />} />
-              <Route path="assinaturas"            element={<Assinaturas />} />
-              <Route path="assinaturas/:id/editar" element={<EditarAssinatura />} />
-              <Route path="pedidos"                element={<MeusPedidos />} />
-              <Route path="assinar"                element={<ConfirmarAssinatura />} />
-            <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
-            <Route path="pedido-avulso"            element={<PedidoAvulso />} />
-            <Route path="como-funciona"            element={<ComoFunciona />} />
-              <Route path="perfil"                 element={<MeuPerfil />} />
-            <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
-            <Route path="pedido-avulso"            element={<PedidoAvulso />} />
-            <Route path="como-funciona"            element={<ComoFunciona />} />
+              <Route index                             element={<ComoFunciona />} />
+              <Route path="catalogo"                   element={<Catalogo />} />
+              <Route path="assinaturas"                element={<Assinaturas />} />
+              <Route path="assinaturas/:id/editar"     element={<EditarAssinatura />} />
+              <Route path="pedidos"                    element={<MeusPedidos />} />
+              <Route path="assinar"                    element={<ConfirmarAssinatura />} />
+              <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
+              <Route path="pedido-avulso"              element={<PedidoAvulso />} />
+              <Route path="perfil"                     element={<MeuPerfil />} />
             </Route>
 
             <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
@@ -86,4 +83,4 @@ export default function App() {
       </AuthProvider>
     </ConfigProvider>
   );
-} 
+}

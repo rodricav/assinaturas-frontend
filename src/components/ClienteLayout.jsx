@@ -5,11 +5,11 @@ import { useConfig } from '../context/ConfigContext';
 import styles from './ClienteLayout.module.css';
 
 const NAV = [
-  { to: '/',            label: 'Catálogo',     icon: '🛒' },
-  { to: '/assinaturas', label: 'Assinaturas',  icon: '🔄' },
-  { to: '/pedidos',     label: 'Meus pedidos', icon: '📦' },
-  { to: '/perfil',      label: 'Meu perfil',   icon: '👤' },
-  { to: '/como-funciona', label: 'Como funciona', icon: '❓' },
+  { to: '/',            label: 'Como funciona', icon: '❓' },
+  { to: '/catalogo',    label: 'Catálogo',      icon: '🛒' },
+  { to: '/assinaturas', label: 'Assinaturas',   icon: '🔄' },
+  { to: '/pedidos',     label: 'Meus pedidos',  icon: '📦' },
+  { to: '/perfil',      label: 'Meu perfil',    icon: '👤' },
 ];
 
 export default function ClienteLayout() {
