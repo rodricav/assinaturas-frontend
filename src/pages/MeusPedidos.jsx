@@ -1,8 +1,8 @@
 // src/pages/MeusPedidos.jsx
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { useLocation } from 'react-router-dom';
 import { Card, Badge, Spinner, Alert, EmptyState } from '../components/ui';
+import ProximaEntrega from '../components/ProximaEntrega';
 import styles from './MeusPedidos.module.css';
 
 const STATUS_CONFIG = {
@@ -33,20 +33,8 @@ export default function MeusPedidos() {
   const [loading, setLoading]     = useState(true);
   const [erro, setErro]           = useState('');
   const [grupoAtivo, setGrupo]    = useState('ativos');
-  const [expandido, setExpandido] = useState(null);
-  const [avaliacoes, setAvaliacoes] = useState({});
-  const [modalAval, setModalAval]   = useState(null); // pedido_id
-  const [nota, setNota]             = useState(0);
-  const [comentario, setComentario] = useState('');
-  const [enviandoAval, setEnviandoAval] = useState(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    // Abre modal de avaliação se vier da URL ?avaliar=id
-    const params = new URLSearchParams(location.search);
-    const avaliarId = params.get('avaliar');
-    if (avaliarId) setModalAval(avaliarId);
-  }, []);
+  const [expandido, setExpandido]   = useState(null);
+  const [pedidoCardId, setPedidoCardId] = useState(null); // ID do pedido mostrado no card ProximaEntrega
 
   useEffect(() => {
     api.get('/pedidos/meus')
@@ -55,22 +43,13 @@ export default function MeusPedidos() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function enviarAvaliacao() {
-    if (!nota) return;
-    setEnviandoAval(true);
-    try {
-      await api.post('/avaliacoes', { pedido_id: modalAval, nota, comentario });
-      setAvaliacoes(a => ({ ...a, [modalAval]: nota }));
-      setModalAval(null); setNota(0); setComentario('');
-    } catch (err) {
-      alert(err.response?.data?.erro || 'Erro ao enviar avaliação');
-    } finally { setEnviandoAval(false); }
-  }
-
   if (loading) return <Spinner />;
 
-  const grupoAtual      = GRUPOS.find(g => g.key === grupoAtivo);
-  const pedidosFiltrados = pedidos.filter(grupoAtual.filtro);
+  const grupoAtual = GRUPOS.find(g => g.key === grupoAtivo);
+  // Remove o pedido já mostrado no card ProximaEntrega para não duplicar
+  const pedidosFiltrados = pedidos.filter(grupoAtual.filtro).filter(p =>
+    grupoAtivo !== 'ativos' || !pedidoCardId || p.id !== pedidoCardId
+  );
 
   return (
     <div className={styles.page}>
@@ -78,6 +57,8 @@ export default function MeusPedidos() {
         <h1 className={styles.title}>Meus pedidos</h1>
         <p className={styles.subtitle}>Acompanhe o status das suas entregas</p>
       </div>
+
+      <ProximaEntrega onPedidoAtivo={(id) => setPedidoCardId(id)} />
 
       {erro && <Alert type="error">{erro}</Alert>}
 
@@ -260,68 +241,11 @@ export default function MeusPedidos() {
                       )}
                     </div>
 
-                    {/* Avaliar entrega */}
-                    {pedido.status === 'entregue' && (
-                      <div className={styles.avaliacaoWrap}>
-                        {avaliacoes[pedido.id] ? (
-                          <div className={styles.avaliacaoFeita}>
-                            {'⭐'.repeat(avaliacoes[pedido.id])} Avaliado
-                          </div>
-                        ) : (
-                          <button className={styles.btnAvaliar}
-                            onClick={() => { setModalAval(pedido.id); setNota(0); setComentario(''); }}>
-                            ⭐ Avaliar esta entrega
-                          </button>
-                        )}
-                      </div>
-                    )}
-
                   </div>
                 )}
               </Card>
             );
           })}
-        </div>
-      )}
-
-      {/* Modal avaliação */}
-      {modalAval && (
-        <div className={styles.modalOverlay} onClick={() => setModalAval(null)}>
-          <div className={styles.modalAval} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalAvalTitulo}>Como foi sua entrega? ⭐</h3>
-            <p className={styles.modalAvalSub}>Sua avaliação nos ajuda a melhorar cada vez mais</p>
-
-            <div className={styles.estrelas}>
-              {[1,2,3,4,5].map(n => (
-                <button key={n} className={`${styles.estrela} ${nota >= n ? styles.estrelaAtiva : ''}`}
-                  onClick={() => setNota(n)}>
-                  ★
-                </button>
-              ))}
-            </div>
-            {nota > 0 && (
-              <p className={styles.notaLabel}>
-                {['', 'Muito ruim 😞', 'Ruim 😕', 'Ok 😐', 'Bom 😊', 'Excelente! 🤩'][nota]}
-              </p>
-            )}
-
-            <textarea
-              className={styles.comentarioInput}
-              placeholder="Deixe um comentário (opcional)..."
-              value={comentario}
-              onChange={e => setComentario(e.target.value)}
-              rows={3}
-            />
-
-            <div className={styles.modalAvalAcoes}>
-              <button className={styles.btnCancelar} onClick={() => setModalAval(null)}>Cancelar</button>
-              <button className={styles.btnEnviar}
-                disabled={!nota || enviandoAval}
-                onClick={enviarAvaliacao}>
-                {enviandoAval ? 'Enviando...' : 'Enviar avaliação'}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>
