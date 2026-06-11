@@ -13,6 +13,9 @@ import MeusPedidos         from './pages/MeusPedidos';
 import EditarAssinatura       from './pages/EditarAssinatura';
 import EditarPedidoCliente   from './pages/EditarPedidoCliente';
 import MeuPerfil               from './pages/MeuPerfil';
+import EditarPedidoCliente     from './pages/EditarPedidoCliente';
+import PedidoAvulso            from './pages/PedidoAvulso';
+import ComoFunciona            from './pages/ComoFunciona';
 import ClienteLayout       from './components/ClienteLayout';
 import AdminLayout         from './components/AdminLayout';
 import Dashboard           from './pages/admin/Dashboard';
@@ -56,8 +59,12 @@ export default function App() {
               <Route path="pedidos"                element={<MeusPedidos />} />
               <Route path="assinar"                element={<ConfirmarAssinatura />} />
             <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
+            <Route path="pedido-avulso"            element={<PedidoAvulso />} />
+            <Route path="como-funciona"            element={<ComoFunciona />} />
               <Route path="perfil"                 element={<MeuPerfil />} />
             <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
+            <Route path="pedido-avulso"            element={<PedidoAvulso />} />
+            <Route path="como-funciona"            element={<ComoFunciona />} />
             </Route>
 
             <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
@@ -80,4 +87,4 @@ export default function App() {
       </AuthProvider>
     </ConfigProvider>
   );
-}
+} 

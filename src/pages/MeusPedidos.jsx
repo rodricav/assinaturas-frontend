@@ -1,7 +1,8 @@
 // src/pages/MeusPedidos.jsx
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Card, Badge, Spinner, Alert, EmptyState } from '../components/ui';
+import { Card, Badge, Spinner, Alert, EmptyState, Button } from '../components/ui';
+import { useNavigate } from 'react-router-dom';
 import ProximaEntrega from '../components/ProximaEntrega';
 import styles from './MeusPedidos.module.css';
 
@@ -34,7 +35,8 @@ export default function MeusPedidos() {
   const [erro, setErro]           = useState('');
   const [grupoAtivo, setGrupo]    = useState('ativos');
   const [expandido, setExpandido]   = useState(null);
-  const [pedidoCardId, setPedidoCardId] = useState(null); // ID do pedido mostrado no card ProximaEntrega
+  const [pedidoCardId, setPedidoCardId] = useState(null);
+  const navigate = useNavigate(); // ID do pedido mostrado no card ProximaEntrega
 
   useEffect(() => {
     api.get('/pedidos/meus')
@@ -54,8 +56,13 @@ export default function MeusPedidos() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Meus pedidos</h1>
-        <p className={styles.subtitle}>Acompanhe o status das suas entregas</p>
+        <div className={styles.headerRow}>
+        <div>
+          <h1 className={styles.title}>Meus pedidos</h1>
+          <p className={styles.subtitle}>Acompanhe o status das suas entregas</p>
+        </div>
+        <Button variant="secondary" onClick={() => navigate('/pedido-avulso')}>+ Pedido avulso</Button>
+      </div>
       </div>
 
       <ProximaEntrega onPedidoAtivo={(id) => setPedidoCardId(id)} />

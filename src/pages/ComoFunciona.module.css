@@ -1,0 +1,72 @@
+/* src/pages/ComoFunciona.module.css */
+.page { max-width: 860px; display: flex; flex-direction: column; gap: 48px; }
+
+.hero {
+  text-align: center; padding: 40px 24px;
+  background: linear-gradient(135deg, var(--brand-pale) 0%, var(--surface) 100%);
+  border-radius: var(--radius-lg, 16px);
+  border: 1.5px solid var(--brand-light);
+}
+.heroTitulo { font-family: var(--font-serif); font-size: 36px; margin: 0 0 12px; color: var(--brand-dark); }
+.heroDesc { font-size: 16px; color: var(--text-2); max-width: 540px; margin: 0 auto 24px; line-height: 1.6; }
+
+.btnComecar {
+  background: var(--brand); color: #fff; border: none;
+  padding: 14px 32px; border-radius: var(--radius);
+  font-size: 15px; font-weight: 600; transition: background var(--transition);
+}
+.btnComecar:hover { background: var(--brand-dark); }
+
+.section { display: flex; flex-direction: column; gap: 24px; }
+.sectionTitulo { font-family: var(--font-serif); font-size: 26px; color: var(--text); margin: 0; }
+
+/* Passos */
+.passos { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px; }
+.passo {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg, 12px); padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+  position: relative;
+}
+.passoNum {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--brand); text-transform: uppercase;
+}
+.passoIcon { font-size: 32px; }
+.passoTitulo { font-size: 15px; font-weight: 700; margin: 0; }
+.passoDesc { font-size: 13px; color: var(--text-2); line-height: 1.5; margin: 0; }
+
+/* Benefícios */
+.beneficios { background: var(--bg); border-radius: var(--radius-lg); padding: 32px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.card {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 20px; display: flex; flex-direction: column; gap: 8px;
+  border: 1.5px solid var(--border);
+}
+.cardIcon { font-size: 28px; }
+.card h3 { font-size: 14px; font-weight: 700; margin: 0; }
+.card p { font-size: 13px; color: var(--text-2); margin: 0; line-height: 1.5; }
+
+/* FAQ */
+.faqs { display: flex; flex-direction: column; gap: 0; border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.faq { padding: 18px 24px; border-bottom: 1px solid var(--border); }
+.faq:last-child { border-bottom: none; }
+.faqQ { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+.faqA { font-size: 13px; color: var(--text-2); margin: 0; line-height: 1.5; }
+
+/* CTA */
+.cta {
+  text-align: center; padding: 40px 24px;
+  background: var(--brand-dark); border-radius: var(--radius-lg);
+}
+.cta h2 { font-family: var(--font-serif); font-size: 28px; color: #fff; margin: 0 0 8px; }
+.cta p { color: rgba(255,255,255,0.7); margin: 0 0 24px; }
+.cta .btnComecar { background: #fff; color: var(--brand-dark); }
+.cta .btnComecar:hover { background: var(--brand-pale); }
+
+@media (max-width: 600px) {
+  .heroTitulo { font-size: 28px; }
+  .passos { grid-template-columns: 1fr 1fr; }
+  .cards { grid-template-columns: 1fr 1fr; }
+}

@@ -9,6 +9,7 @@ const NAV = [
   { to: '/assinaturas', label: 'Assinaturas',  icon: '🔄' },
   { to: '/pedidos',     label: 'Meus pedidos', icon: '📦' },
   { to: '/perfil',      label: 'Meu perfil',   icon: '👤' },
+  { to: '/como-funciona', label: 'Como funciona', icon: '❓' },
 ];
 
 export default function ClienteLayout() {
