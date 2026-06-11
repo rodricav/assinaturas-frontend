@@ -1,139 +1,198 @@
-// src/pages/ComoFunciona.jsx
+// src/pages/Assinaturas.jsx
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styles from './ComoFunciona.module.css';
+import { getMinhasAssinaturas, pausarAssinatura, reativarAssinatura, cancelarAssinatura } from '../services/api';
+import api from '../services/api';
+import { Button, Card, Badge, Spinner, EmptyState, Modal, Alert } from '../components/ui';
+import styles from './Assinaturas.module.css';
 
-const PASSOS = [
-  {
-    num: '01',
-    icon: '🛒',
-    titulo: 'Escolha seus produtos',
-    desc: 'Navegue pelo catálogo e adicione os produtos que quiser. Você monta sua própria cesta — sem produtos impostos.',
-  },
-  {
-    num: '02',
-    icon: '📅',
-    titulo: 'Defina a frequência',
-    desc: 'Quinzenal (a cada 15 dias) ou mensal (a cada 30 dias). O plano mensal tem 5% de desconto automático.',
-  },
-  {
-    num: '03',
-    icon: '💳',
-    titulo: 'Confirme e pague',
-    desc: 'No dia programado, geramos seu pedido automaticamente. Você recebe um e-mail com o link de pagamento e tem 2 dias para pagar.',
-  },
-  {
-    num: '04',
-    icon: '🚗',
-    titulo: 'Receba em casa',
-    desc: 'Após o pagamento confirmado, separamos e entregamos no endereço escolhido dentro do prazo da sua região.',
-  },
-];
+const STATUS_BADGE = {
+  ativa:     { color: 'green',  label: 'Ativa' },
+  pausada:   { color: 'yellow', label: 'Pausada' },
+  cancelada: { color: 'gray',   label: 'Cancelada' },
+};
 
-const FAQS = [
-  {
-    q: 'Posso cancelar quando quiser?',
-    a: 'Sim, sem multa e sem fidelidade. Cancele a qualquer momento pelo portal.',
-  },
-  {
-    q: 'E se eu quiser pular uma entrega?',
-    a: 'Você pode pausar a assinatura ou alterar os itens com até 3 dias de antecedência da próxima geração.',
-  },
-  {
-    q: 'O que acontece se um item estiver em falta?',
-    a: 'Você é avisado por e-mail. O pedido é gerado com os itens disponíveis e o valor ajustado automaticamente.',
-  },
-  {
-    q: 'Posso ter mais de um endereço de entrega?',
-    a: 'Sim. Você pode cadastrar até 3 endereços e escolher qual usar em cada assinatura.',
-  },
-  {
-    q: 'Posso fazer um pedido único sem assinar?',
-    a: 'Sim! Na aba "Meus Pedidos" tem a opção de fazer um pedido avulso — entrega única, sem assinatura.',
-  },
-  {
-    q: 'Como funciona o pagamento?',
-    a: 'Usamos o Mercado Pago. Você pode pagar com cartão de crédito, débito, Pix ou boleto.',
-  },
-];
+const METODO_LABEL = {
+  credit_card:  '💳 Cartão de crédito',
+  debit_card:   '💳 Cartão de débito',
+  pix:          '⚡ Pix',
+  ticket:       '🎫 Boleto',
+  account_money:'💰 Saldo MP',
+};
 
-export default function ComoFunciona() {
+export default function Assinaturas() {
+  const [assinaturas, setAssinaturas] = useState([]);
+  const [ultimoPagamento, setUltimoPagamento] = useState({});
+  const [loading, setLoading]         = useState(true);
+  const [erro, setErro]               = useState('');
+  const [modal, setModal]             = useState(null);
+  const [motivo, setMotivo]           = useState('');
+  const [acao, setAcao]               = useState(false);
   const navigate = useNavigate();
+
+  async function carregar() {
+    try {
+      const { data } = await getMinhasAssinaturas();
+      setAssinaturas(data);
+
+      // Busca último pagamento de cada assinatura
+      const pedidos = await api.get('/pedidos/meus').catch(() => ({ data: [] }));
+      const pagamentos = {};
+      (pedidos.data || []).forEach(p => {
+        if (p.pagamento_status === 'aprovado' && p.pagamento_metodo) {
+          if (!pagamentos[p.assinatura_id]) {
+            pagamentos[p.assinatura_id] = p.pagamento_metodo;
+          }
+        }
+      });
+      setUltimoPagamento(pagamentos);
+    } catch { setErro('Erro ao carregar assinaturas'); }
+    finally { setLoading(false); }
+  }
+
+  useEffect(() => { carregar(); }, []);
+
+  async function executarAcao() {
+    setAcao(true);
+    try {
+      if (modal.tipo === 'pausar')   await pausarAssinatura(modal.id);
+      if (modal.tipo === 'reativar') await reativarAssinatura(modal.id);
+      if (modal.tipo === 'cancelar') await cancelarAssinatura(modal.id, { motivo });
+      setModal(null); setMotivo('');
+      await carregar();
+    } catch (err) {
+      setErro(err.response?.data?.erro || 'Erro ao executar ação');
+    } finally { setAcao(false); }
+  }
+
+  if (loading) return <Spinner />;
 
   return (
     <div className={styles.page}>
-      <div className={styles.hero}>
-        <h1 className={styles.heroTitulo}>Como funciona</h1>
-        <p className={styles.heroDesc}>
-          Receba produtos frescos da Papa Rica na sua porta, na frequência que preferir.
-          Simples, flexível e sem compromisso de longo prazo.
-        </p>
-        <button className={styles.btnComecar} onClick={() => navigate('/')}>
-          Começar agora →
-        </button>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Minhas assinaturas</h1>
+          <p className={styles.subtitle}>Gerencie suas entregas recorrentes</p>
+        </div>
+        <Button onClick={() => navigate('/')}>+ Nova assinatura</Button>
       </div>
 
-      {/* Passos */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitulo}>Em 4 passos simples</h2>
-        <div className={styles.passos}>
-          {PASSOS.map((p, i) => (
-            <div key={i} className={styles.passo}>
-              <div className={styles.passoNum}>{p.num}</div>
-              <div className={styles.passoIcon}>{p.icon}</div>
-              <h3 className={styles.passoTitulo}>{p.titulo}</h3>
-              <p className={styles.passoDesc}>{p.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {erro && <Alert type="error">{erro}</Alert>}
 
-      {/* Benefícios */}
-      <section className={`${styles.section} ${styles.beneficios}`}>
-        <h2 className={styles.sectionTitulo}>Por que assinar?</h2>
-        <div className={styles.cards}>
-          <div className={styles.card}>
-            <span className={styles.cardIcon}>💰</span>
-            <h3>Desconto no plano mensal</h3>
-            <p>5% off automático ao escolher a frequência mensal.</p>
-          </div>
-          <div className={styles.card}>
-            <span className={styles.cardIcon}>🔄</span>
-            <h3>Flexibilidade total</h3>
-            <p>Altere os itens, pause ou cancele quando quiser.</p>
-          </div>
-          <div className={styles.card}>
-            <span className={styles.cardIcon}>📦</span>
-            <h3>Sem surpresas</h3>
-            <p>Você aprova o pedido antes de pagar. Nada é cobrado automaticamente.</p>
-          </div>
-          <div className={styles.card}>
-            <span className={styles.cardIcon}>🌿</span>
-            <h3>Produtos frescos</h3>
-            <p>Direto da Papa Rica para sua mesa, com a qualidade que você já conhece.</p>
+      {assinaturas.length === 0 ? (
+        <EmptyState
+          icon="📦"
+          title="Nenhuma assinatura ainda"
+          desc="Escolha seus produtos favoritos e configure sua primeira entrega recorrente."
+          action={<Button onClick={() => navigate('/')}>Ver catálogo</Button>}
+        />
+      ) : (
+        <div className={styles.lista}>
+          {assinaturas.map(a => {
+            const sb = STATUS_BADGE[a.status] || STATUS_BADGE.ativa;
+            const metodo = ultimoPagamento[a.id];
+            return (
+              <Card key={a.id} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <div>
+                    <div className={styles.cardTopo}>
+                      <h3 className={styles.planoNome}>{a.plano_nome}</h3>
+                      <Badge color={sb.color}>{sb.label}</Badge>
+                    </div>
+                    <p className={styles.cardSub}>A cada {a.intervalo_dias} dias</p>
+                    {metodo && (
+                      <p className={styles.metodoPag}>
+                        {METODO_LABEL[metodo] || `💳 ${metodo}`}
+                      </p>
+                    )}
+                  </div>
+                  <div className={styles.actions}>
+                    {a.status === 'ativa' && (
+                      <Button size="sm" variant="secondary" onClick={() => navigate(`/assinaturas/${a.id}/editar`)}>
+                        Alterar
+                      </Button>
+                    )}
+                    {a.status === 'ativa' && (
+                      <Button size="sm" variant="ghost" onClick={() => setModal({ tipo: 'pausar', id: a.id })}>
+                        Pausar
+                      </Button>
+                    )}
+                    {a.status === 'pausada' && (
+                      <Button size="sm" variant="secondary" onClick={() => setModal({ tipo: 'reativar', id: a.id })}>
+                        Reativar
+                      </Button>
+                    )}
+                    {a.status !== 'cancelada' && (
+                      <Button size="sm" variant="danger" onClick={() => setModal({ tipo: 'cancelar', id: a.id })}>
+                        Cancelar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.itens}>
+                  {(a.itens || []).map(item => (
+                    <div key={item.produto_id} className={styles.item}>
+                      <span className={styles.itemEmoji}>🛒</span>
+                      <span className={styles.itemNome}>{item.nome}</span>
+                      <span className={styles.itemQtd}>x{item.quantidade}</span>
+                      <span className={styles.itemPreco}>R$ {parseFloat(item.preco).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.cardFooter}>
+                  <div className={styles.footerInfo}>
+                    <span className={styles.footerLabel}>Próxima entrega</span>
+                    <span className={styles.footerVal}>
+                      {a.proxima_geracao
+                        ? new Date(a.proxima_geracao).toLocaleDateString('pt-BR')
+                        : '—'}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={
+          modal?.tipo === 'pausar'   ? 'Pausar assinatura'   :
+          modal?.tipo === 'reativar' ? 'Reativar assinatura' :
+          'Cancelar assinatura'
+        }
+      >
+        <div className={styles.modalContent}>
+          {modal?.tipo === 'pausar'   && <p>Sua assinatura será pausada e nenhum pedido será gerado até você reativar.</p>}
+          {modal?.tipo === 'reativar' && <p>Sua assinatura voltará a gerar pedidos normalmente.</p>}
+          {modal?.tipo === 'cancelar' && (
+            <>
+              <p>Tem certeza que deseja cancelar? Esta ação não pode ser desfeita.</p>
+              <textarea
+                className={styles.motivoInput}
+                placeholder="Motivo do cancelamento (opcional)"
+                value={motivo}
+                onChange={e => setMotivo(e.target.value)}
+                rows={3}
+              />
+            </>
+          )}
+          <div className={styles.modalActions}>
+            <Button variant="ghost" onClick={() => setModal(null)}>Voltar</Button>
+            <Button
+              variant={modal?.tipo === 'cancelar' ? 'danger' : 'primary'}
+              loading={acao}
+              onClick={executarAcao}
+            >
+              {modal?.tipo === 'pausar' ? 'Pausar' : modal?.tipo === 'reativar' ? 'Reativar' : 'Cancelar assinatura'}
+            </Button>
           </div>
         </div>
-      </section>
-
-      {/* FAQ */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitulo}>Perguntas frequentes</h2>
-        <div className={styles.faqs}>
-          {FAQS.map((f, i) => (
-            <div key={i} className={styles.faq}>
-              <h3 className={styles.faqQ}>{f.q}</h3>
-              <p className={styles.faqA}>{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className={styles.cta}>
-        <h2>Pronto para começar?</h2>
-        <p>Escolha seus produtos favoritos e configure sua primeira entrega.</p>
-        <button className={styles.btnComecar} onClick={() => navigate('/')}>
-          Ver catálogo →
-        </button>
-      </div>
+      </Modal>
     </div>
   );
 }

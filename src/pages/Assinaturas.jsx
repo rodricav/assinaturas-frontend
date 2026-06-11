@@ -74,7 +74,7 @@ export default function Assinaturas() {
           <h1 className={styles.title}>Minhas assinaturas</h1>
           <p className={styles.subtitle}>Gerencie suas entregas recorrentes</p>
         </div>
-        <Button onClick={() => navigate('/')}>+ Nova assinatura</Button>
+        <Button onClick={() => navigate('/catalogo')}>+ Nova assinatura</Button>
       </div>
 
       {erro && <Alert type="error">{erro}</Alert>}
@@ -84,7 +84,7 @@ export default function Assinaturas() {
           icon="📦"
           title="Nenhuma assinatura ainda"
           desc="Escolha seus produtos favoritos e configure sua primeira entrega recorrente."
-          action={<Button onClick={() => navigate('/')}>Ver catálogo</Button>}
+          action={<Button onClick={() => navigate('/catalogo')}>Ver catálogo</Button>}
         />
       ) : (
         <div className={styles.lista}>
