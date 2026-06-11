@@ -30,7 +30,7 @@ function formatarData(date) {
   return date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-export default function ProximaEntrega() {
+export default function ProximaEntrega({ onPedidoAtivo }) {
   const [dados, setDados]       = useState(null);
   const [loading, setLoading]   = useState(true);
   const [modalEscolha, setModalEscolha] = useState(false);
@@ -53,6 +53,7 @@ export default function ProximaEntrega() {
       );
 
       setDados({ assinatura: proxima, pedido: pedidoAtivo || null });
+      if (onPedidoAtivo) onPedidoAtivo(pedidoAtivo?.id || null);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
