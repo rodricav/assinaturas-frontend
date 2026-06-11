@@ -1,6 +1,7 @@
 // src/pages/admin/Produtos.jsx
 import { useState, useEffect, useRef } from 'react';
-import { getProdutosAdmin, criarProduto, editarProduto, ajustarEstoque, getCategorias } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { getProdutosAdmin, criarProduto, editarProduto, ajustarEstoque, getCategorias, getPedidosPorProduto } from '../../services/api';
 import { Card, Button, Input, Badge, Spinner, Alert, Modal } from '../../components/ui';
 import styles from './Produtos.module.css';
 
@@ -8,6 +9,13 @@ const CLOUD_NAME    = 'ddhyk7nat';
 const UPLOAD_PRESET = 'au0f8iuw';
 
 const formVazio = { nome: '', descricao: '', preco: '', foto_url: '', ordem: 0, ativo: true, categoria_id: '' };
+
+const STATUS_LABEL = {
+  aguardando_pagamento: { label: 'Aguardando pagamento', color: 'yellow' },
+  confirmado:           { label: 'Confirmado',           color: 'blue'   },
+  em_separacao:         { label: 'Em separação',         color: 'purple' },
+  saiu_para_entrega:    { label: 'Saiu para entrega',    color: 'orange' },
+};
 
 export default function Produtos() {
   const [produtos, setProdutos]     = useState([]);
@@ -25,7 +33,12 @@ export default function Produtos() {
   const [estoqueObs, setEstoqueObs] = useState('');
   const [estoqueMot, setEstoqueMot] = useState('entrada_manual');
 
+  // Estado do modal de pedidos
+  const [pedidosProduto, setPedidosProduto]       = useState([]);
+  const [loadingPedidos, setLoadingPedidos]       = useState(false);
+
   const inputFileRef = useRef(null);
+  const navigate     = useNavigate();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   async function carregar() {
@@ -64,12 +77,26 @@ export default function Produtos() {
     setSel(p); setEstoqueQtd(''); setEstoqueObs(''); setModal('estoque');
   }
 
+  async function abrirPedidos(p) {
+    setSel(p);
+    setPedidosProduto([]);
+    setModal('pedidos');
+    setLoadingPedidos(true);
+    try {
+      const { data } = await getPedidosPorProduto(p.id);
+      setPedidosProduto(data);
+    } catch {
+      setErro('Erro ao carregar pedidos do produto');
+    } finally {
+      setLoadingPedidos(false);
+    }
+  }
+
   // Upload para Cloudinary
   async function handleUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Valida tipo e tamanho
     if (!file.type.startsWith('image/')) {
       setErro('Selecione um arquivo de imagem'); return;
     }
@@ -100,7 +127,6 @@ export default function Produtos() {
       setErro('Erro ao fazer upload. Tente novamente.');
     } finally {
       setUploadando(false);
-      // Limpa o input para permitir re-upload do mesmo arquivo
       if (inputFileRef.current) inputFileRef.current.value = '';
     }
   }
@@ -122,8 +148,8 @@ export default function Produtos() {
         setErro('Informe um preço válido'); setSalvando(false); return;
       }
 
-      if (sel) await editarProduto(sel.id, dados);
-      else     await criarProduto(dados);
+      if (sel && modal === 'criar') await editarProduto(sel.id, dados);
+      else                          await criarProduto(dados);
 
       setModal(null); await carregar();
     } catch (err) {
@@ -182,6 +208,9 @@ export default function Produtos() {
               <div className={styles.cardActions}>
                 <Button size="sm" variant="ghost" onClick={() => abrirEditar(p)}>Editar</Button>
                 <Button size="sm" variant="secondary" onClick={() => abrirEstoque(p)}>Estoque</Button>
+                <Button size="sm" variant="ghost" onClick={() => abrirPedidos(p)}>
+                  Ver pedidos
+                </Button>
               </div>
             </div>
           </Card>
@@ -209,7 +238,6 @@ export default function Produtos() {
           <div className={styles.fotoWrap}>
             <label className={styles.fieldLabel}>Foto do produto</label>
 
-            {/* Preview */}
             {preview && (
               <div className={styles.fotoPreview}>
                 <img src={preview} alt="preview" onError={() => setPreview('')} />
@@ -220,7 +248,6 @@ export default function Produtos() {
               </div>
             )}
 
-            {/* Botões de upload */}
             <div className={styles.fotoAcoes}>
               <button type="button" className={styles.btnUpload}
                 onClick={() => inputFileRef.current?.click()}
@@ -292,6 +319,70 @@ export default function Produtos() {
             <Button type="submit" loading={salvando}>Salvar</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal pedidos por produto */}
+      <Modal
+        open={modal === 'pedidos'}
+        onClose={() => setModal(null)}
+        title={`Pedidos com "${sel?.nome}"`}
+      >
+        <div className={styles.pedidosModal}>
+          {loadingPedidos ? (
+            <Spinner />
+          ) : pedidosProduto.length === 0 ? (
+            <p className={styles.pedidosVazio}>
+              Nenhum pedido ativo contém este produto no momento.
+            </p>
+          ) : (
+            <>
+              <p className={styles.pedidosTotal}>
+                {pedidosProduto.length} pedido{pedidosProduto.length > 1 ? 's' : ''} ativo{pedidosProduto.length > 1 ? 's' : ''}
+              </p>
+              <div className={styles.pedidosList}>
+                {pedidosProduto.map(p => {
+                  const st = STATUS_LABEL[p.pedido_status] || { label: p.pedido_status, color: 'gray' };
+                  return (
+                    <div key={p.pedido_id} className={styles.pedidoRow}>
+                      <div className={styles.pedidoInfo}>
+                        <div className={styles.pedidoTopo}>
+                          <span className={styles.pedidoNumero}>{p.numero_pedido}</span>
+                          <Badge color={st.color}>{st.label}</Badge>
+                          {p.avulso && <Badge color="gray">Avulso</Badge>}
+                        </div>
+                        <span className={styles.pedidoCliente}>👤 {p.cliente_nome}</span>
+                        {p.cliente_telefone && (
+                          <span className={styles.pedidoTel}>📱 {p.cliente_telefone}</span>
+                        )}
+                        <div className={styles.pedidoMeta}>
+                          <span>Qtd: <strong>{p.quantidade}</strong></span>
+                          {p.data_entrega_prevista && (
+                            <span>
+                              Entrega prevista:{' '}
+                              <strong>
+                                {new Date(p.data_entrega_prevista).toLocaleDateString('pt-BR')}
+                              </strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setModal(null);
+                          navigate(`/painel/pedidos/${p.pedido_id}/editar`);
+                        }}
+                      >
+                        Editar pedido
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </Modal>
     </div>
   );
