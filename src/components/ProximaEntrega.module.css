@@ -113,3 +113,32 @@
   .datas { flex-direction: column; }
   .dataDiv { width: auto; height: 1px; }
 }
+
+/* Modal de escolha */
+.modalEscolha { display: flex; flex-direction: column; gap: 12px; }
+.modalDesc { font-size: 14px; color: var(--text-2); margin: 0 0 4px; }
+.opcao {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+  text-align: left; width: 100%; transition: all var(--transition);
+}
+.opcao:hover { border-color: var(--brand); background: var(--brand-pale); }
+.opcaoIcon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.opcao strong { font-size: 14px; display: block; margin-bottom: 4px; }
+.opcao p { font-size: 13px; color: var(--text-3); margin: 0; line-height: 1.4; }
+
+/* Modal de escolha */
+.modalEscolha { display: flex; flex-direction: column; gap: 16px; }
+.modalDesc { font-size: 14px; color: var(--text-2); margin: 0; }
+.opcoes { display: flex; flex-direction: column; gap: 10px; }
+.opcao {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 16px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); background: var(--surface);
+  text-align: left; transition: all var(--transition);
+}
+.opcao:hover { border-color: var(--brand); background: var(--brand-pale); }
+.opcaoIcon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.opcao strong { font-size: 14px; display: block; margin-bottom: 3px; }
+.opcao p { font-size: 12px; color: var(--text-3); margin: 0; line-height: 1.4; }
