@@ -10,8 +10,10 @@ import Catalogo            from './pages/Catalogo';
 import Assinaturas         from './pages/Assinaturas';
 import ConfirmarAssinatura from './pages/ConfirmarAssinatura';
 import MeusPedidos         from './pages/MeusPedidos';
-import EditarAssinatura    from './pages/EditarAssinatura';
-import MeuPerfil           from './pages/MeuPerfil';
+import EditarAssinatura       from './pages/EditarAssinatura';
+import EditarPedidoCliente   from './pages/EditarPedidoCliente';
+import MeuPerfil               from './pages/MeuPerfil';
+import EditarPedidoCliente     from './pages/EditarPedidoCliente';
 import ClienteLayout       from './components/ClienteLayout';
 import AdminLayout         from './components/AdminLayout';
 import Dashboard           from './pages/admin/Dashboard';
@@ -54,7 +56,9 @@ export default function App() {
               <Route path="assinaturas/:id/editar" element={<EditarAssinatura />} />
               <Route path="pedidos"                element={<MeusPedidos />} />
               <Route path="assinar"                element={<ConfirmarAssinatura />} />
+            <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
               <Route path="perfil"                 element={<MeuPerfil />} />
+            <Route path="pedidos/:id/editar-cliente" element={<EditarPedidoCliente />} />
             </Route>
 
             <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
