@@ -5,7 +5,6 @@ import { getProdutos, getCategorias } from '../services/api';
 import api from '../services/api';
 import { Button, Card, Badge, Spinner, EmptyState } from '../components/ui';
 import styles from './Catalogo.module.css';
-import ProximaEntrega from '../components/ProximaEntrega';
 
 export default function Catalogo() {
   const [produtos, setProdutos]       = useState([]);
@@ -77,7 +76,6 @@ export default function Catalogo() {
 
   return (
     <div className={styles.page}>
-      <ProximaEntrega />
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Catálogo</h1>
