@@ -81,6 +81,18 @@ export default function Catalogo() {
           <h1 className={styles.title}>Catálogo</h1>
           <p className={styles.subtitle}>Escolha os produtos da sua assinatura</p>
         </div>
+        <button
+          className={styles.avulsoBtn}
+          onClick={() => navigate('/pedido-avulso')}
+          title="Fazer um pedido único, sem assinatura"
+        >
+          <span className={styles.avulsoIcon}>🛍️</span>
+          <span className={styles.avulsoTexto}>
+            <span className={styles.avulsoLabel}>Pedido avulso</span>
+            <span className={styles.avulsoSub}>Entrega única, sem compromisso</span>
+          </span>
+          <span className={styles.avulsoArrow}>→</span>
+        </button>
       </div>
 
       {/* Filtro por categoria */}
