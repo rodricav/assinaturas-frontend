@@ -13,7 +13,6 @@ import MeusPedidos         from './pages/MeusPedidos';
 import EditarAssinatura       from './pages/EditarAssinatura';
 import EditarPedidoCliente   from './pages/EditarPedidoCliente';
 import MeuPerfil               from './pages/MeuPerfil';
-import EditarPedidoCliente     from './pages/EditarPedidoCliente';
 import ClienteLayout       from './components/ClienteLayout';
 import AdminLayout         from './components/AdminLayout';
 import Dashboard           from './pages/admin/Dashboard';
