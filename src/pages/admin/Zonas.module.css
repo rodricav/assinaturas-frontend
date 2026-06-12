@@ -1,23 +1,89 @@
 /* src/pages/admin/Zonas.module.css */
-.page { max-width: 800px; }
-.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-.title { font-family: var(--font-serif); font-size: 32px; }
+.page { max-width: 1200px; }
+
+.header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 16px;
+  flex-wrap: wrap; margin-bottom: 20px;
+}
+.title    { font-family: var(--font-serif); font-size: 32px; }
 .subtitle { color: var(--text-3); font-size: 15px; margin-top: 4px; }
 
-.lista { display: flex; flex-direction: column; gap: 12px; }
-.card { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
-.cardLeft { flex: 1; }
-.cardTop { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.zonaNome { font-weight: 600; font-size: 16px; }
-.cepRange { display: flex; align-items: center; gap: 10px; }
-.cep { font-family: 'Courier New', monospace; font-size: 15px; color: var(--brand-dark); font-weight: 600; }
-.cepSep { color: var(--text-3); }
-.cardRight { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
-.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.statVal { font-size: 18px; font-weight: 700; }
-.statLabel { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
-.actions { display: flex; gap: 8px; }
+/* Banner modo desenho */
+.bannerDesenho {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  background: #fffbeb; border: 1.5px solid #fbbf24;
+  border-radius: var(--radius); padding: 12px 16px;
+  margin-bottom: 16px; font-size: 14px;
+}
+.bannerAcoes { display: flex; gap: 8px; }
 
-.form { display: flex; flex-direction: column; gap: 14px; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.modalActions { display: flex; gap: 8px; justify-content: flex-end; }
+/* Layout mapa + painel */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.mapaWrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  position: sticky;
+  top: 24px;
+}
+
+.mapa { height: 600px; width: 100%; }
+
+/* Painel lateral */
+.painel { display: flex; flex-direction: column; gap: 12px; }
+
+.zonaCard  { display: flex; flex-direction: column; gap: 10px; }
+.zonaCardAtiva { border-color: var(--brand) !important; box-shadow: 0 0 0 2px var(--brand-pale); }
+
+.zonaHeader   { display: flex; align-items: center; justify-content: space-between; }
+.zonaNomeWrap { display: flex; align-items: center; gap: 8px; }
+.zonaCorDot   { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.zonaNome     { font-weight: 600; font-size: 14px; }
+
+.zonaInfo {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-size: 13px; color: var(--text-2);
+}
+.zonaCep { font-family: monospace; font-size: 12px; color: var(--text-3); }
+
+.zonaStatus { font-size: 12px; }
+.tagPoligono { color: #059669; background: #d1fae5; padding: 2px 8px; border-radius: 99px; }
+.tagCep      { color: #92400e; background: #fef3c7; padding: 2px 8px; border-radius: 99px; }
+
+.zonaAcoes { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.vazio { color: var(--text-3); font-size: 14px; text-align: center; padding: 24px 0; }
+
+/* Modal form */
+.form        { display: flex; flex-direction: column; gap: 14px; }
+.row2        { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modalActions{ display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Seletor de cor */
+.corField  { display: flex; flex-direction: column; gap: 6px; }
+.corLabel  { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.corWrap   { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.corInput  { width: 40px; height: 36px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; }
+.corHex    { font-family: monospace; font-size: 13px; color: var(--text-2); }
+.coresSugeridas { display: flex; gap: 6px; flex-wrap: wrap; }
+.corBtn    {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid transparent; cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+}
+.corBtn:hover   { transform: scale(1.2); }
+.corBtnSel      { border-color: var(--text) !important; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .mapaWrap { position: static; }
+  .mapa { height: 400px; }
+}
