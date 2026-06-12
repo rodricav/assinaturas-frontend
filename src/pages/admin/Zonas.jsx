@@ -1,59 +1,274 @@
 // src/pages/admin/Zonas.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getZonas, criarZona, editarZona } from '../../services/api';
-import { Card, Button, Input, Badge, Spinner, Alert, Modal } from '../../components/ui';
+import api from '../../services/api';
+import { Card, Button, Input, Alert, Spinner, Modal, Badge } from '../../components/ui';
 import styles from './Zonas.module.css';
 
+// Cores padrão para novas zonas
+const CORES_PADRAO = [
+  '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
+  '#8b5cf6', '#06b6d4', '#f97316', '#84cc16',
+];
+
+const formVazio = {
+  nome: '', cep_inicio: '', cep_fim: '',
+  custo_entrega: '', prazo_dias: '1', cor: '#3b82f6',
+};
+
 export default function Zonas() {
-  const [zonas, setZonas]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [erro, setErro]       = useState('');
-  const [modal, setModal]     = useState(false);
-  const [sel, setSel]         = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const [form, setForm]       = useState({ nome: '', cep_inicio: '', cep_fim: '', custo_entrega: '', prazo_dias: '' });
+  const [zonas, setZonas]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [erro, setErro]             = useState('');
+  const [sucesso, setSucesso]       = useState('');
+  const [modal, setModal]           = useState(null); // 'criar' | 'editar'
+  const [sel, setSel]               = useState(null);
+  const [form, setForm]             = useState(formVazio);
+  const [salvando, setSalvando]     = useState(false);
+  const [zonaDesenho, setZonaDesenho] = useState(null); // zona sendo desenhada
+  const [modoDesenho, setModoDesenho] = useState(false);
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const mapRef      = useRef(null);
+  const leafletRef  = useRef(null); // instância do mapa Leaflet
+  const camadasRef  = useRef({});   // { zonaId: L.Polygon }
+  const pontosTmpRef = useRef([]);  // pontos do polígono em desenho
+  const marcadoresTmpRef = useRef([]); // marcadores temporários
+  const linhaTmpRef = useRef(null); // polyline temporária
 
-  async function carregar() {
-    try { const { data } = await getZonas(); setZonas(data); }
-    catch { setErro('Erro ao carregar zonas'); }
+  // ── Carrega Leaflet dinamicamente ────────────────────────────────────────────
+  useEffect(() => {
+    async function init() {
+      if (!window.L) {
+        // Injeta CSS do Leaflet
+        const link = document.createElement('link');
+        link.rel  = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+        document.head.appendChild(link);
+
+        // Injeta JS do Leaflet
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+          script.onload  = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      const L = window.L;
+      if (leafletRef.current) return; // já inicializado
+
+      const map = L.map(mapRef.current, { zoomControl: true }).setView([-22.5, -47.4], 10);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      leafletRef.current = map;
+      await carregar(map);
+    }
+
+    init().catch(console.error);
+    return () => {
+      if (leafletRef.current) {
+        leafletRef.current.remove();
+        leafletRef.current = null;
+      }
+    };
+  }, []);
+
+  async function carregar(mapInstance) {
+    try {
+      const { data } = await getZonas();
+      setZonas(data);
+      renderizarZonas(data, mapInstance || leafletRef.current);
+    } catch { setErro('Erro ao carregar zonas'); }
     finally { setLoading(false); }
   }
 
-  useEffect(() => { carregar(); }, []);
+  function renderizarZonas(lista, map) {
+    if (!map) return;
+    const L = window.L;
 
-  function abrir(zona = null) {
-    setSel(zona);
-    setForm(zona
-      ? { nome: zona.nome, cep_inicio: zona.cep_inicio, cep_fim: zona.cep_fim, custo_entrega: zona.custo_entrega, prazo_dias: zona.prazo_dias }
-      : { nome: '', cep_inicio: '', cep_fim: '', custo_entrega: '', prazo_dias: '' }
-    );
-    setModal(true);
+    // Remove camadas antigas
+    Object.values(camadasRef.current).forEach(c => map.removeLayer(c));
+    camadasRef.current = {};
+
+    lista.forEach(zona => {
+      if (!zona.poligono?.length) return;
+      const cor = zona.cor || '#3b82f6';
+      const poly = L.polygon(zona.poligono, {
+        color:       cor,
+        fillColor:   cor,
+        fillOpacity: 0.25,
+        weight:      2,
+      }).addTo(map);
+
+      poly.bindTooltip(
+        `<strong>${zona.nome}</strong><br>R$ ${parseFloat(zona.custo_entrega).toFixed(2)} · ${zona.prazo_dias} dia(s)`,
+        { sticky: true }
+      );
+
+      camadasRef.current[zona.id] = poly;
+    });
+  }
+
+  // ── Modo desenho ─────────────────────────────────────────────────────────────
+  function iniciarDesenho(zona) {
+    const map = leafletRef.current;
+    if (!map) return;
+    const L = window.L;
+
+    setZonaDesenho(zona);
+    setModoDesenho(true);
+    pontosTmpRef.current = [];
+
+    // Remove polígono existente da zona, se houver
+    if (camadasRef.current[zona.id]) {
+      map.removeLayer(camadasRef.current[zona.id]);
+      delete camadasRef.current[zona.id];
+    }
+
+    map.getContainer().style.cursor = 'crosshair';
+
+    function aoClicar(e) {
+      const { lat, lng } = e.latlng;
+      pontosTmpRef.current.push([lat, lng]);
+
+      // Marcador no ponto
+      const marker = L.circleMarker([lat, lng], {
+        radius: 5, color: zona.cor || '#3b82f6', fillOpacity: 1,
+      }).addTo(map);
+      marcadoresTmpRef.current.push(marker);
+
+      // Atualiza linha prévia
+      if (linhaTmpRef.current) map.removeLayer(linhaTmpRef.current);
+      if (pontosTmpRef.current.length > 1) {
+        linhaTmpRef.current = L.polyline(pontosTmpRef.current, {
+          color: zona.cor || '#3b82f6', dashArray: '4',
+        }).addTo(map);
+      }
+    }
+
+    map._desenhoClick = aoClicar;
+    map.on('click', aoClicar);
+  }
+
+  function cancelarDesenho() {
+    const map = leafletRef.current;
+    if (!map) return;
+
+    map.off('click', map._desenhoClick);
+    map.getContainer().style.cursor = '';
+
+    // Limpa marcadores e linha temporários
+    marcadoresTmpRef.current.forEach(m => map.removeLayer(m));
+    marcadoresTmpRef.current = [];
+    if (linhaTmpRef.current) { map.removeLayer(linhaTmpRef.current); linhaTmpRef.current = null; }
+    pontosTmpRef.current = [];
+
+    // Rerenderiza polígono original da zona
+    if (zonaDesenho) {
+      const original = zonas.find(z => z.id === zonaDesenho.id);
+      if (original?.poligono?.length) renderizarZonas(zonas, map);
+    }
+
+    setModoDesenho(false);
+    setZonaDesenho(null);
+  }
+
+  async function confirmarDesenho() {
+    const pontos = pontosTmpRef.current;
+    if (pontos.length < 3) {
+      setErro('Clique ao menos 3 pontos para formar um polígono.');
+      return;
+    }
+
+    const map = leafletRef.current;
+    map.off('click', map._desenhoClick);
+    map.getContainer().style.cursor = '';
+    marcadoresTmpRef.current.forEach(m => map.removeLayer(m));
+    marcadoresTmpRef.current = [];
+    if (linhaTmpRef.current) { map.removeLayer(linhaTmpRef.current); linhaTmpRef.current = null; }
+
+    setSalvando(true);
+    try {
+      await api.patch(`/admin/zonas/${zonaDesenho.id}/poligono`, { poligono: pontos });
+      feedback('Polígono salvo!');
+      pontosTmpRef.current = [];
+      setModoDesenho(false);
+      setZonaDesenho(null);
+      await carregar();
+    } catch (err) {
+      setErro(err.response?.data?.erro || 'Erro ao salvar polígono');
+    } finally { setSalvando(false); }
+  }
+
+  async function removerPoligono(zona) {
+    if (!confirm(`Remover o polígono de "${zona.nome}"? A zona voltará a usar faixas de CEP.`)) return;
+    try {
+      await api.delete(`/admin/zonas/${zona.id}/poligono`);
+      feedback('Polígono removido.');
+      await carregar();
+    } catch { setErro('Erro ao remover polígono'); }
+  }
+
+  function centralizarZona(zona) {
+    const map = leafletRef.current;
+    if (!map || !zona.poligono?.length) return;
+    const poly = camadasRef.current[zona.id];
+    if (poly) map.fitBounds(poly.getBounds(), { padding: [40, 40] });
+  }
+
+  // ── Modal criar / editar ──────────────────────────────────────────────────────
+  function abrirCriar() {
+    const proxCor = CORES_PADRAO[zonas.length % CORES_PADRAO.length];
+    setForm({ ...formVazio, cor: proxCor });
+    setSel(null); setErro(''); setModal('criar');
+  }
+
+  function abrirEditar(zona) {
+    setForm({
+      nome:          zona.nome,
+      cep_inicio:    zona.cep_inicio,
+      cep_fim:       zona.cep_fim,
+      custo_entrega: zona.custo_entrega,
+      prazo_dias:    zona.prazo_dias,
+      cor:           zona.cor || '#3b82f6',
+    });
+    setSel(zona); setErro(''); setModal('editar');
   }
 
   async function salvar(e) {
     e.preventDefault(); setSalvando(true); setErro('');
     try {
       const dados = {
-        ...form,
-        cep_inicio: form.cep_inicio.replace(/\D/g, ''),
-        cep_fim:    form.cep_fim.replace(/\D/g, ''),
+        nome:          form.nome,
+        cep_inicio:    form.cep_inicio.replace(/\D/g, ''),
+        cep_fim:       form.cep_fim.replace(/\D/g, ''),
         custo_entrega: parseFloat(form.custo_entrega),
         prazo_dias:    parseInt(form.prazo_dias),
+        cor:           form.cor,
       };
-      if (sel) await editarZona(sel.id, dados);
-      else     await criarZona(dados);
-      setModal(false); await carregar();
+      if (modal === 'editar' && sel) {
+        await editarZona(sel.id, dados);
+      } else {
+        await criarZona(dados);
+      }
+      setModal(null);
+      feedback('Zona salva!');
+      await carregar();
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao salvar zona');
+      setErro(err.response?.data?.erro || 'Erro ao salvar');
     } finally { setSalvando(false); }
   }
 
-  async function toggleAtiva(zona) {
-    try { await editarZona(zona.id, { ativa: !zona.ativa }); await carregar(); }
-    catch { setErro('Erro ao alterar zona'); }
+  function feedback(msg) {
+    setSucesso(msg);
+    setTimeout(() => setSucesso(''), 3000);
   }
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   if (loading) return <Spinner />;
 
@@ -62,60 +277,148 @@ export default function Zonas() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Zonas de entrega</h1>
-          <p className={styles.subtitle}>Configure as faixas de CEP atendidas</p>
+          <p className={styles.subtitle}>
+            {zonas.length} zona(s) · desenhe polígonos no mapa ou use faixas de CEP como fallback
+          </p>
         </div>
-        <Button onClick={() => abrir()}>+ Nova zona</Button>
+        <Button onClick={abrirCriar}>+ Nova zona</Button>
       </div>
 
-      {erro && <Alert type="error">{erro}</Alert>}
+      {erro    && <Alert type="error">{erro}</Alert>}
+      {sucesso && <Alert type="success">{sucesso}</Alert>}
 
-      <div className={styles.lista}>
-        {zonas.map(z => (
-          <Card key={z.id} className={styles.card}>
-            <div className={styles.cardLeft}>
-              <div className={styles.cardTop}>
-                <h3 className={styles.zonaNome}>{z.nome}</h3>
-                <Badge color={z.ativa ? 'green' : 'gray'}>{z.ativa ? 'Ativa' : 'Inativa'}</Badge>
+      {modoDesenho && (
+        <div className={styles.bannerDesenho}>
+          <span>
+            ✏️ Desenhando <strong>{zonaDesenho?.nome}</strong> —
+            clique no mapa para adicionar pontos ({pontosTmpRef.current.length} ponto(s))
+          </span>
+          <div className={styles.bannerAcoes}>
+            <Button size="sm" onClick={confirmarDesenho} loading={salvando}>
+              ✅ Confirmar polígono
+            </Button>
+            <Button size="sm" variant="ghost" onClick={cancelarDesenho}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className={styles.layout}>
+        {/* Mapa */}
+        <div className={styles.mapaWrap}>
+          <div ref={mapRef} className={styles.mapa} />
+        </div>
+
+        {/* Painel lateral */}
+        <div className={styles.painel}>
+          {zonas.map(zona => (
+            <Card key={zona.id} className={`${styles.zonaCard} ${zonaDesenho?.id === zona.id ? styles.zonaCardAtiva : ''}`}>
+              <div className={styles.zonaHeader}>
+                <div className={styles.zonaNomeWrap}>
+                  <span
+                    className={styles.zonaCorDot}
+                    style={{ background: zona.cor || '#3b82f6' }}
+                  />
+                  <span className={styles.zonaNome}>{zona.nome}</span>
+                  {!zona.ativa && <Badge color="gray">Inativa</Badge>}
+                </div>
               </div>
-              <div className={styles.cepRange}>
-                <span className={styles.cep}>{z.cep_inicio.replace(/(\d{5})(\d{3})/, '$1-$2')}</span>
-                <span className={styles.cepSep}>→</span>
-                <span className={styles.cep}>{z.cep_fim.replace(/(\d{5})(\d{3})/, '$1-$2')}</span>
+
+              <div className={styles.zonaInfo}>
+                <span>R$ {parseFloat(zona.custo_entrega).toFixed(2)}</span>
+                <span>{zona.prazo_dias} dia(s)</span>
+                <span className={styles.zonaCep}>
+                  {zona.cep_inicio}–{zona.cep_fim}
+                </span>
               </div>
-            </div>
-            <div className={styles.cardRight}>
-              <div className={styles.stat}>
-                <span className={styles.statVal}>R$ {parseFloat(z.custo_entrega).toFixed(2)}</span>
-                <span className={styles.statLabel}>frete</span>
+
+              <div className={styles.zonaStatus}>
+                {zona.poligono?.length
+                  ? <span className={styles.tagPoligono}>🗺️ Polígono ativo ({zona.poligono.length} pts)</span>
+                  : <span className={styles.tagCep}>📮 Usando faixa de CEP</span>
+                }
               </div>
-              <div className={styles.stat}>
-                <span className={styles.statVal}>{z.prazo_dias}d</span>
-                <span className={styles.statLabel}>prazo</span>
-              </div>
-              <div className={styles.actions}>
-                <Button size="sm" variant="ghost" onClick={() => abrir(z)}>Editar</Button>
-                <Button size="sm" variant={z.ativa ? 'danger' : 'secondary'} onClick={() => toggleAtiva(z)}>
-                  {z.ativa ? 'Desativar' : 'Ativar'}
+
+              <div className={styles.zonaAcoes}>
+                {zona.poligono?.length
+                  ? <Button size="sm" variant="ghost" onClick={() => centralizarZona(zona)}>Ver no mapa</Button>
+                  : null
+                }
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => iniciarDesenho(zona)}
+                  disabled={modoDesenho}
+                >
+                  {zona.poligono?.length ? 'Redesenhar' : 'Desenhar'}
                 </Button>
+                {zona.poligono?.length
+                  ? <Button size="sm" variant="ghost" onClick={() => removerPoligono(zona)}>🗑 Polígono</Button>
+                  : null
+                }
+                <Button size="sm" variant="ghost" onClick={() => abrirEditar(zona)}>Editar</Button>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+
+          {zonas.length === 0 && (
+            <p className={styles.vazio}>Nenhuma zona cadastrada. Crie uma para começar.</p>
+          )}
+        </div>
       </div>
 
-      <Modal open={modal} onClose={() => setModal(false)} title={sel ? 'Editar zona' : 'Nova zona de entrega'}>
+      {/* Modal criar/editar */}
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal === 'editar' ? `Editar — ${sel?.nome}` : 'Nova zona'}
+      >
         <form onSubmit={salvar} className={styles.form}>
-          <Input label="Nome da zona" value={form.nome} onChange={e => set('nome', e.target.value)} required placeholder="Ex: Limeira e Região" />
+          {erro && <Alert type="error">{erro}</Alert>}
+
+          <Input label="Nome da zona" value={form.nome}
+            onChange={e => set('nome', e.target.value)} required />
+
           <div className={styles.row2}>
-            <Input label="CEP início" value={form.cep_inicio} onChange={e => set('cep_inicio', e.target.value)} required placeholder="13480000" maxLength={9} />
-            <Input label="CEP fim" value={form.cep_fim} onChange={e => set('cep_fim', e.target.value)} required placeholder="13489999" maxLength={9} />
+            <Input label="CEP início" value={form.cep_inicio} maxLength={8}
+              onChange={e => set('cep_inicio', e.target.value.replace(/\D/g, ''))}
+              placeholder="13480000" required />
+            <Input label="CEP fim" value={form.cep_fim} maxLength={8}
+              onChange={e => set('cep_fim', e.target.value.replace(/\D/g, ''))}
+              placeholder="13489999" required />
           </div>
+
           <div className={styles.row2}>
-            <Input label="Custo de entrega (R$)" type="number" step="0.01" value={form.custo_entrega} onChange={e => set('custo_entrega', e.target.value)} required />
-            <Input label="Prazo (dias úteis)" type="number" value={form.prazo_dias} onChange={e => set('prazo_dias', e.target.value)} required />
+            <Input label="Frete (R$)" type="number" step="0.01" min="0"
+              value={form.custo_entrega}
+              onChange={e => set('custo_entrega', e.target.value)} required />
+            <Input label="Prazo (dias)" type="number" min="1"
+              value={form.prazo_dias}
+              onChange={e => set('prazo_dias', e.target.value)} required />
           </div>
+
+          <div className={styles.corField}>
+            <label className={styles.corLabel}>Cor no mapa</label>
+            <div className={styles.corWrap}>
+              <input type="color" value={form.cor}
+                onChange={e => set('cor', e.target.value)}
+                className={styles.corInput} />
+              <span className={styles.corHex}>{form.cor}</span>
+              <div className={styles.coresSugeridas}>
+                {CORES_PADRAO.map(c => (
+                  <button key={c} type="button"
+                    className={`${styles.corBtn} ${form.cor === c ? styles.corBtnSel : ''}`}
+                    style={{ background: c }}
+                    onClick={() => set('cor', c)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className={styles.modalActions}>
-            <Button type="button" variant="ghost" onClick={() => setModal(false)}>Cancelar</Button>
+            <Button type="button" variant="ghost" onClick={() => setModal(null)}>Cancelar</Button>
             <Button type="submit" loading={salvando}>Salvar</Button>
           </div>
         </form>
