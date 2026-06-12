@@ -396,13 +396,16 @@ export default function Zonas() {
           <Input label="Nome da zona" value={form.nome}
             onChange={e => set('nome', e.target.value)} required />
 
+          <p className={styles.cepHint}>
+            📮 CEP é opcional se a zona tiver polígono desenhado. Ao menos um dos dois deve estar preenchido.
+          </p>
           <div className={styles.row2}>
-            <Input label="CEP início" value={form.cep_inicio} maxLength={8}
+            <Input label="CEP início (opcional)" value={form.cep_inicio} maxLength={8}
               onChange={e => set('cep_inicio', e.target.value.replace(/\D/g, ''))}
-              placeholder="13480000" required />
-            <Input label="CEP fim" value={form.cep_fim} maxLength={8}
+              placeholder="13480000" />
+            <Input label="CEP fim (opcional)" value={form.cep_fim} maxLength={8}
               onChange={e => set('cep_fim', e.target.value.replace(/\D/g, ''))}
-              placeholder="13489999" required />
+              placeholder="13489999" />
           </div>
 
           <div className={styles.row2}>
