@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPedidos, avancarEstagio } from '../../services/api';
 import api from '../../services/api';
+import { useConfig } from '../../context/ConfigContext';
 import { Card, Badge, Button, Spinner, Alert, Modal } from '../../components/ui';
 import styles from './Pedidos.module.css';
 
@@ -22,26 +23,70 @@ const PROXIMO_LABEL = {
   entregue:          'Marcar entregue',
 };
 
-function imprimirPedido(p) {
+function formatarEndereco(p) {
+  const partes = [
+    p.endereco_logradouro || p.endereco,
+    p.endereco_numero     || p.numero,
+    p.endereco_complemento|| p.complemento,
+    p.endereco_bairro     || p.bairro,
+    p.endereco_cidade     || p.cidade,
+    p.endereco_estado     || p.estado,
+  ].filter(Boolean);
+
+  const cep = p.endereco_cep || p.cep;
+  const cepFormatado = cep
+    ? cep.replace(/^(\d{5})(\d{3})$/, '$1-$2')
+    : null;
+
+  return partes.join(', ') + (cepFormatado ? ` — CEP ${cepFormatado}` : '');
+}
+
+function imprimirPedido(p, config = {}) {
   const itens = (p.itens || []).map(i =>
     `<tr>
       <td style="padding:8px;border-bottom:1px solid #eee">${i.nome || i.produto_nome || '—'}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantidade}</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">R$ ${(parseFloat(i.preco_unitario||0)*i.quantidade).toFixed(2)}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">R$ ${(parseFloat(i.preco_unitario || 0) * i.quantidade).toFixed(2)}</td>
     </tr>`
   ).join('');
 
+  const nomeNegocio = config.nome_negocio || 'AssínaSaas';
+  const logoUrl     = config.logo_url || '';
+
+  const cabecalhoNegocio = logoUrl
+    ? `<img src="${logoUrl}" alt="${nomeNegocio}" style="height:48px;object-fit:contain;margin-bottom:4px;" />`
+    : `<span style="font-size:22px;font-weight:700;color:#1a6b3c;">${nomeNegocio}</span>`;
+
+  const enderecoEntrega = formatarEndereco(p);
+
   const html = `
     <html><head>
-      <title>Separação ${p.numero_pedido || p.id?.slice(0,8)}</title>
+      <title>Separação ${p.numero_pedido || p.id?.slice(0, 8)}</title>
       <style>
         body { font-family: Arial, sans-serif; padding: 32px; color: #333; }
-        h1 { color: #1a6b3c; margin-bottom: 4px; }
-        .sub { color: #666; font-size: 13px; margin-bottom: 24px; }
-        .info { display: flex; gap: 40px; margin-bottom: 24px; flex-wrap: wrap; }
+        .cabecalho {
+          display: flex; align-items: center; justify-content: space-between;
+          padding-bottom: 16px; margin-bottom: 20px;
+          border-bottom: 2px solid #1a6b3c;
+        }
+        .cabecalho-negocio { display: flex; flex-direction: column; gap: 2px; }
+        .cabecalho-titulo { text-align: right; }
+        h1 { color: #1a6b3c; margin: 0 0 2px 0; font-size: 20px; }
+        .sub { color: #666; font-size: 12px; }
+        .info { display: flex; gap: 32px; margin-bottom: 20px; flex-wrap: wrap; }
         .info-item { display: flex; flex-direction: column; gap: 2px; }
         .info-label { font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 0.05em; }
         .info-val { font-size: 15px; font-weight: 600; }
+        .endereco-box {
+          background: #f5f9f6; border: 1px solid #c8e6d4;
+          border-radius: 6px; padding: 10px 14px;
+          margin-bottom: 20px; font-size: 13px;
+        }
+        .endereco-label {
+          font-size: 11px; text-transform: uppercase; color: #999;
+          letter-spacing: 0.05em; margin-bottom: 4px;
+        }
+        .endereco-val { font-weight: 600; color: #1a4a2e; }
         table { width: 100%; border-collapse: collapse; }
         thead tr { background: #f5f5f5; }
         th { padding: 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; }
@@ -52,12 +97,21 @@ function imprimirPedido(p) {
         @media print { body { padding: 16px; } }
       </style>
     </head><body>
-      <h1>Lista de separação</h1>
-      <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+
+      <div class="cabecalho">
+        <div class="cabecalho-negocio">
+          ${cabecalhoNegocio}
+        </div>
+        <div class="cabecalho-titulo">
+          <h1>Lista de separação</h1>
+          <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+        </div>
+      </div>
+
       <div class="info">
         <div class="info-item">
           <span class="info-label">Pedido</span>
-          <span class="info-val">${p.numero_pedido || '#' + (p.id?.slice(0,8)||'').toUpperCase()}</span>
+          <span class="info-val">${p.numero_pedido || '#' + (p.id?.slice(0, 8) || '').toUpperCase()}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Cliente</span>
@@ -72,14 +126,25 @@ function imprimirPedido(p) {
           <span class="info-val">${ESTAGIOS[p.status]?.label || p.status}</span>
         </div>
       </div>
+
+      ${enderecoEntrega ? `
+        <div class="endereco-box">
+          <div class="endereco-label">📍 Endereço de entrega</div>
+          <div class="endereco-val">${enderecoEntrega}</div>
+        </div>
+      ` : ''}
+
       <table>
         <thead><tr>
           <th>Produto</th><th>Qtd</th><th>Subtotal</th>
         </tr></thead>
         <tbody>${itens}</tbody>
       </table>
-      <div class="total">Total: R$ ${parseFloat(p.total||0).toFixed(2)}</div>
+
+      <div class="total">Total: R$ ${parseFloat(p.total || 0).toFixed(2)}</div>
+
       ${p.observacao_admin ? `<div class="obs">📋 <strong>Observação:</strong> ${p.observacao_admin}</div>` : ''}
+
     </body></html>
   `;
 
@@ -99,6 +164,7 @@ export default function Pedidos() {
   const [obs, setObs]               = useState('');
   const [acao, setAcao]             = useState(false);
   const [erro, setErro]             = useState('');
+  const { config } = useConfig();
   const navigate = useNavigate();
 
   async function carregar() {
@@ -129,9 +195,9 @@ export default function Pedidos() {
   async function handleImprimir(p) {
     try {
       const { data } = await api.get(`/pedidos/${p.id}`);
-      imprimirPedido(data);
+      imprimirPedido(data, config);
     } catch {
-      imprimirPedido(p);
+      imprimirPedido(p, config);
     }
   }
 
@@ -188,7 +254,7 @@ export default function Pedidos() {
             <Card key={p.id} className={styles.card}>
               <div className={styles.cardTop}>
                 <div className={styles.cardId}>
-                  <span className={styles.numPedido}>{p.numero_pedido || '#' + p.id.slice(0,8).toUpperCase()}</span>
+                  <span className={styles.numPedido}>{p.numero_pedido || '#' + p.id.slice(0, 8).toUpperCase()}</span>
                   <span className={styles.ciclo}>Ciclo {p.numero_ciclo}</span>
                 </div>
                 <Badge color={est.color}>{est.label}</Badge>
