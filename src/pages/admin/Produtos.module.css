@@ -131,3 +131,66 @@
   font-size: 12px; color: var(--text-3);
 }
 .pedidoMeta strong { color: var(--text); }
+
+/* ── Acrescentar no final de Produtos.module.css ── */
+
+/* Modal pedidos por produto */
+.pedidosModal {
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 60vh; overflow-y: auto;
+  padding-right: 4px; /* evita scrollbar sobrepor conteúdo */
+}
+
+.pedidosVazio {
+  text-align: center; color: var(--text-3);
+  padding: 32px 0; font-size: 14px;
+}
+
+.pedidosTotal {
+  font-size: 13px; color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  position: sticky; top: 0;
+  background: var(--bg, #fff);
+  z-index: 1;
+}
+
+.pedidosList { display: flex; flex-direction: column; gap: 8px; }
+
+.pedidoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color var(--transition);
+}
+.pedidoRow:hover { border-color: var(--brand); }
+
+.pedidoInfo {
+  display: flex; flex-direction: column; gap: 3px;
+  flex: 1; min-width: 0;
+}
+
+.pedidoTopo {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+
+.pedidoNumero {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  font-family: var(--font-mono, monospace);
+}
+
+.pedidoCliente {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.pedidoMeta {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 12px; color: var(--text-3);
+}
+.pedidoMeta strong { color: var(--text); }
