@@ -59,6 +59,18 @@ function imprimirPedido(p, config = {}) {
 
   const enderecoEntrega = formatarEndereco(p);
 
+  const subtotal      = parseFloat(p.subtotal   || 0);
+  const desconto      = parseFloat(p.desconto   || 0);
+  const frete         = parseFloat(p.custo_entrega || 0);
+  const total         = parseFloat(p.total      || 0);
+
+  const linhaDesconto = desconto > 0
+    ? `<div class="total-row">
+        <span>Desconto</span>
+        <span style="color:#1a6b3c">− R$ ${desconto.toFixed(2)}</span>
+       </div>`
+    : '';
+
   const html = `
     <html><head>
       <title>Separação ${p.numero_pedido || p.id?.slice(0, 8)}</title>
@@ -70,7 +82,6 @@ function imprimirPedido(p, config = {}) {
           border-bottom: 2px solid #1a6b3c;
         }
         .cabecalho-negocio { display: flex; flex-direction: column; gap: 2px; }
-        .cabecalho-titulo { text-align: right; }
         h1 { color: #1a6b3c; margin: 0 0 2px 0; font-size: 20px; }
         .sub { color: #666; font-size: 12px; }
         .info { display: flex; gap: 32px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -82,18 +93,27 @@ function imprimirPedido(p, config = {}) {
           border-radius: 6px; padding: 10px 14px;
           margin-bottom: 20px; font-size: 13px;
         }
-        .endereco-label {
-          font-size: 11px; text-transform: uppercase; color: #999;
-          letter-spacing: 0.05em; margin-bottom: 4px;
-        }
+        .endereco-label { font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 0.05em; margin-bottom: 4px; }
         .endereco-val { font-weight: 600; color: #1a4a2e; }
         table { width: 100%; border-collapse: collapse; }
         thead tr { background: #f5f5f5; }
         th { padding: 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; }
         th:last-child { text-align: right; }
         th:nth-child(2) { text-align: center; }
-        .total { text-align: right; margin-top: 16px; font-size: 16px; font-weight: 700; }
-        .obs { margin-top: 20px; background: #fff8e6; padding: 12px; border-radius: 6px; font-size: 13px; }
+        .totais {
+          margin-top: 12px; border-top: 1px solid #eee;
+          padding-top: 8px; float: right; min-width: 220px;
+        }
+        .total-row {
+          display: flex; justify-content: space-between;
+          font-size: 13px; color: #666; padding: 3px 0;
+        }
+        .total-final {
+          display: flex; justify-content: space-between;
+          font-size: 16px; font-weight: 700; color: #333;
+          border-top: 1px solid #ccc; margin-top: 6px; padding-top: 6px;
+        }
+        .obs { margin-top: 20px; clear: both; background: #fff8e6; padding: 12px; border-radius: 6px; font-size: 13px; }
         @media print { body { padding: 16px; } }
       </style>
     </head><body>
@@ -102,7 +122,7 @@ function imprimirPedido(p, config = {}) {
         <div class="cabecalho-negocio">
           ${cabecalhoNegocio}
         </div>
-        <div class="cabecalho-titulo">
+        <div style="text-align:right">
           <h1>Lista de separação</h1>
           <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
         </div>
@@ -141,7 +161,21 @@ function imprimirPedido(p, config = {}) {
         <tbody>${itens}</tbody>
       </table>
 
-      <div class="total">Total: R$ ${parseFloat(p.total || 0).toFixed(2)}</div>
+      <div class="totais">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span>R$ ${subtotal.toFixed(2)}</span>
+        </div>
+        ${linhaDesconto}
+        <div class="total-row">
+          <span>Frete</span>
+          <span>R$ ${frete.toFixed(2)}</span>
+        </div>
+        <div class="total-final">
+          <span>Total</span>
+          <span>R$ ${total.toFixed(2)}</span>
+        </div>
+      </div>
 
       ${p.observacao_admin ? `<div class="obs">📋 <strong>Observação:</strong> ${p.observacao_admin}</div>` : ''}
 
@@ -246,9 +280,10 @@ export default function Pedidos() {
 
       <div className={styles.lista}>
         {pedidos.map(p => {
-          const est     = ESTAGIOS[p.status] || ESTAGIOS.cancelado;
-          const proximo = est.proximo;
+          const est        = ESTAGIOS[p.status] || ESTAGIOS.cancelado;
+          const proximo    = est.proximo;
           const podeEditar = ['aguardando_pagamento', 'confirmado'].includes(p.status);
+          const endereco   = formatarEndereco(p);
 
           return (
             <Card key={p.id} className={styles.card}>
@@ -280,6 +315,13 @@ export default function Pedidos() {
                   <span className={styles.infoVal}>{new Date(p.gerado_em).toLocaleDateString('pt-BR')}</span>
                 </div>
               </div>
+
+              {endereco && (
+                <div className={styles.enderecoCard}>
+                  <span className={styles.enderecoCardIcon}>📍</span>
+                  <span className={styles.enderecoCardText}>{endereco}</span>
+                </div>
+              )}
 
               {p.observacao_admin && (
                 <div className={styles.obsAdmin}>📋 {p.observacao_admin}</div>
