@@ -21,7 +21,12 @@
 .estoqueNum { font-size: 20px; font-weight: 700; }
 .estoqueLabel { font-size: 12px; color: var(--text-3); }
 
-.cardActions { display: flex; gap: 8px; margin-top: 4px; }
+.cardActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;   /* ← esta linha resolve o corte do botão */
+  margin-top: 8px;
+}
 
 /* Form */
 .form { display: flex; flex-direction: column; gap: 14px; }
