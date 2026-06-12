@@ -25,8 +25,6 @@ export default function EditarPedido() {
   const [enderecoId, setEnderecoId] = useState(null);
   const [modalEnd, setModalEnd]     = useState(false);
 
-  const clienteId = pedido?.assinatura_id; // usado para buscar endereços
-
   useEffect(() => {
     Promise.all([
       api.get(`/pedidos/${id}`),
@@ -43,13 +41,18 @@ export default function EditarPedido() {
       });
       setCarrinho(c);
 
-      // Busca endereços passando cliente_id via query
+      // Busca endereços do cliente e pré-seleciona o que está salvo no pedido
       api.get('/enderecos', { params: { cliente_id: p.cliente_id } })
         .then(r => {
           setEnderecos(r.data);
-          // Pré-seleciona o endereço atual da assinatura ou o principal
-          const principal = r.data.find(e => e.principal);
-          if (principal) setEnderecoId(principal.id);
+          if (p.endereco_id) {
+            // Usa o endereço salvo no pedido
+            setEnderecoId(p.endereco_id);
+          } else {
+            // Fallback: endereço principal do cliente
+            const principal = r.data.find(e => e.principal);
+            if (principal) setEnderecoId(principal.id);
+          }
         })
         .catch(() => {});
     }).catch(() => setErro('Erro ao carregar pedido'))
@@ -63,7 +66,7 @@ export default function EditarPedido() {
     return n;
   });
 
-  const endSel    = enderecos.find(e => e.id === enderecoId);
+  const endSel     = enderecos.find(e => e.id === enderecoId);
   const totalItens = Object.values(carrinho).reduce((a, b) => a + b, 0);
   const subtotal   = Object.entries(carrinho).reduce((acc, [pid, qtd]) => {
     const p = produtos.find(x => x.id === pid);
@@ -83,14 +86,27 @@ export default function EditarPedido() {
     setSalvando(true); setErro('');
     try {
       const itens = Object.entries(carrinho).map(([produto_id, quantidade]) => ({ produto_id, quantidade }));
+      // Salva itens
       await api.patch(`/pedidos/${id}/itens`, { itens, observacao });
-      // Salva endereço se mudou
+      // Salva endereço (sempre, para garantir persistência)
       if (enderecoId) {
-        await api.patch(`/pedidos/${id}/endereco`, { endereco_id: enderecoId }).catch(() => {});
+        await api.patch(`/pedidos/${id}/endereco`, { endereco_id: enderecoId });
       }
       navigate('/painel/pedidos');
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao salvar');
+    } finally { setSalvando(false); }
+  }
+
+  async function salvarEnderecoAvulso() {
+    // Salva só o endereço sem mexer nos itens (para pedidos não editáveis)
+    if (!enderecoId) return;
+    setSalvando(true);
+    try {
+      await api.patch(`/pedidos/${id}/endereco`, { endereco_id: enderecoId });
+      feedback('Endereço atualizado!');
+    } catch (err) {
+      setErro(err.response?.data?.erro || 'Erro ao salvar endereço');
     } finally { setSalvando(false); }
   }
 
@@ -114,7 +130,7 @@ export default function EditarPedido() {
 
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Editar pedido {pedido.numero_pedido || '#' + id.slice(0,8).toUpperCase()}</h1>
+          <h1 className={styles.title}>Editar pedido {pedido.numero_pedido || '#' + id.slice(0, 8).toUpperCase()}</h1>
           <p className={styles.subtitle}>{pedido.cliente_nome} — {pedido.cliente_email}</p>
         </div>
         <Badge color={pedido.status === 'confirmado' ? 'blue' : pedido.status === 'aguardando_pagamento' ? 'yellow' : 'gray'}>
@@ -149,7 +165,7 @@ export default function EditarPedido() {
         {endSel ? (
           <div className={styles.endSel}>
             <div className={styles.endApelido}>{endSel.apelido}</div>
-            <p className={styles.endLine}>{endSel.endereco}, {endSel.numero}{endSel.complemento ? ` ${endSel.complemento}` : ''}</p>
+            <p className={styles.endLine}>{endSel.endereco || endSel.logradouro}, {endSel.numero}{endSel.complemento ? ` ${endSel.complemento}` : ''}</p>
             <p className={styles.endLine}>{endSel.bairro} — {endSel.cidade}/{endSel.estado} · CEP {endSel.cep?.replace(/(\d{5})(\d{3})/, '$1-$2')}</p>
             <p className={styles.endZona}>
               Frete: <strong>R$ {parseFloat(endSel.custo_entrega || 0).toFixed(2)}</strong> · {endSel.prazo_dias} dia(s) útil(eis) — {endSel.zona_nome}
@@ -157,6 +173,13 @@ export default function EditarPedido() {
           </div>
         ) : (
           <p className={styles.obsHint}>Nenhum endereço selecionado.</p>
+        )}
+
+        {/* Botão de salvar endereço isolado (para pedidos em estágio avançado) */}
+        {!podeEditarItens && (
+          <Button loading={salvando} onClick={salvarEnderecoAvulso} variant="secondary">
+            Salvar endereço
+          </Button>
         )}
       </Card>
 
