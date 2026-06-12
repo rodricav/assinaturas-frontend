@@ -107,3 +107,13 @@
   justify-content: center;
   padding: 40px 0;
 }
+
+/* Hint CEP opcional */
+.cepHint {
+  font-size: 12px;
+  color: var(--text-3);
+  background: var(--brand-pale);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  line-height: 1.5;
+}
