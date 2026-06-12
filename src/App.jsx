@@ -10,17 +10,18 @@ import Catalogo            from './pages/Catalogo';
 import Assinaturas         from './pages/Assinaturas';
 import ConfirmarAssinatura from './pages/ConfirmarAssinatura';
 import MeusPedidos         from './pages/MeusPedidos';
-import EditarAssinatura       from './pages/EditarAssinatura';
-import MeuPerfil               from './pages/MeuPerfil';
-import EditarPedidoCliente     from './pages/EditarPedidoCliente';
-import PedidoAvulso            from './pages/PedidoAvulso';
-import ComoFunciona            from './pages/ComoFunciona';
+import EditarAssinatura    from './pages/EditarAssinatura';
+import MeuPerfil           from './pages/MeuPerfil';
+import EditarPedidoCliente from './pages/EditarPedidoCliente';
+import PedidoAvulso        from './pages/PedidoAvulso';
+import ComoFunciona        from './pages/ComoFunciona';
 import ClienteLayout       from './components/ClienteLayout';
 import AdminLayout         from './components/AdminLayout';
 import Dashboard           from './pages/admin/Dashboard';
 import Pedidos             from './pages/admin/Pedidos';
 import EditarPedido        from './pages/admin/EditarPedido';
 import Produtos            from './pages/admin/Produtos';
+import ProdutosMassa       from './pages/admin/ProdutosMassa';
 import Categorias          from './pages/admin/Categorias';
 import Zonas               from './pages/admin/Zonas';
 import Assinantes          from './pages/admin/Assinantes';
@@ -64,16 +65,17 @@ export default function App() {
             </Route>
 
             <Route path="/painel" element={<RotaAdmin><AdminLayout /></RotaAdmin>}>
-              <Route index                     element={<Dashboard />} />
-              <Route path="pedidos"            element={<Pedidos />} />
-              <Route path="pedidos/:id/editar" element={<EditarPedido />} />
-              <Route path="estoque7dias"       element={<Estoque7Dias />} />
-              <Route path="produtos"           element={<Produtos />} />
-              <Route path="categorias"         element={<Categorias />} />
-              <Route path="zonas"              element={<Zonas />} />
-              <Route path="assinantes"         element={<Assinantes />} />
-              <Route path="assinaturas"        element={<AssinaturasAdmin />} />
-              <Route path="configuracoes"      element={<Configuracoes />} />
+              <Route index                         element={<Dashboard />} />
+              <Route path="pedidos"                element={<Pedidos />} />
+              <Route path="pedidos/:id/editar"     element={<EditarPedido />} />
+              <Route path="estoque7dias"           element={<Estoque7Dias />} />
+              <Route path="produtos"               element={<Produtos />} />
+              <Route path="produtos/massa"         element={<ProdutosMassa />} />
+              <Route path="categorias"             element={<Categorias />} />
+              <Route path="zonas"                  element={<Zonas />} />
+              <Route path="assinantes"             element={<Assinantes />} />
+              <Route path="assinaturas"            element={<AssinaturasAdmin />} />
+              <Route path="configuracoes"          element={<Configuracoes />} />
             </Route>
 
             <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
