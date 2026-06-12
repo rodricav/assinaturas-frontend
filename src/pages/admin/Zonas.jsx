@@ -16,17 +16,18 @@ const formVazio = {
 };
 
 export default function Zonas() {
-  const [zonas, setZonas]               = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [erro, setErro]                 = useState('');
-  const [sucesso, setSucesso]           = useState('');
-  const [modal, setModal]               = useState(null);
-  const [sel, setSel]                   = useState(null);
-  const [form, setForm]                 = useState(formVazio);
-  const [salvando, setSalvando]         = useState(false);
-  const [zonaDesenho, setZonaDesenho]   = useState(null);
-  const [modoDesenho, setModoDesenho]   = useState(false);
-  const [pontosCount, setPontosCount]   = useState(0); // para forçar re-render do contador
+  const [zonas, setZonas]             = useState([]);
+  const [loadingZonas, setLoadingZonas] = useState(true);  // carregamento das zonas
+  const [mapaReady, setMapaReady]     = useState(false);   // mapa inicializado
+  const [erro, setErro]               = useState('');
+  const [sucesso, setSucesso]         = useState('');
+  const [modal, setModal]             = useState(null);
+  const [sel, setSel]                 = useState(null);
+  const [form, setForm]               = useState(formVazio);
+  const [salvando, setSalvando]       = useState(false);
+  const [zonaDesenho, setZonaDesenho] = useState(null);
+  const [modoDesenho, setModoDesenho] = useState(false);
+  const [pontosCount, setPontosCount] = useState(0);
 
   const mapRef           = useRef(null);
   const leafletRef       = useRef(null);
@@ -35,12 +36,14 @@ export default function Zonas() {
   const marcadoresTmpRef = useRef([]);
   const linhaTmpRef      = useRef(null);
 
-  // ── Carrega Leaflet e inicializa mapa ────────────────────────────────────────
+  // ── Inicializa mapa após o DOM estar pronto ───────────────────────────────────
+  // Não usa `if (loading) return <Spinner />` antes do render do mapa —
+  // o container precisa existir no DOM antes de L.map() ser chamado.
   useEffect(() => {
     let cancelado = false;
 
     async function inicializar() {
-      // Injeta CSS (idempotente)
+      // 1. CSS
       if (!document.querySelector('link[href*="leaflet.min.css"]')) {
         const link = document.createElement('link');
         link.rel  = 'stylesheet';
@@ -48,36 +51,33 @@ export default function Zonas() {
         document.head.appendChild(link);
       }
 
-      // Injeta JS se ainda não carregado
+      // 2. JS
       if (!window.L) {
         await new Promise((resolve, reject) => {
           if (document.querySelector('script[src*="leaflet.min.js"]')) {
-            // Script já injetado — aguarda window.L ficar disponível
             const poll = setInterval(() => {
               if (window.L) { clearInterval(poll); resolve(); }
             }, 50);
             return;
           }
-          const script    = document.createElement('script');
-          script.src      = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-          script.onload   = resolve;
-          script.onerror  = reject;
+          const script   = document.createElement('script');
+          script.src     = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+          script.onload  = resolve;
+          script.onerror = reject;
           document.head.appendChild(script);
         });
       }
 
       if (cancelado) return;
 
-      // Aguarda o container estar no DOM (React Strict Mode pode chamar
-      // o effect antes do paint; requestAnimationFrame resolve isso)
-      if (!mapRef.current) {
-        await new Promise(resolve => requestAnimationFrame(resolve));
-      }
-      if (cancelado || !mapRef.current) return;
+      // 3. Garante que o container está pintado no DOM
+      await new Promise(resolve => requestAnimationFrame(() =>
+        requestAnimationFrame(resolve) // dois frames para garantir
+      ));
 
-      // Evita double-init
-      if (leafletRef.current) return;
+      if (cancelado || !mapRef.current || leafletRef.current) return;
 
+      // 4. Inicializa o mapa
       const L   = window.L;
       const map = L.map(mapRef.current, { zoomControl: true })
                    .setView([-22.5, -47.4], 10);
@@ -88,10 +88,17 @@ export default function Zonas() {
       }).addTo(map);
 
       leafletRef.current = map;
-      if (!cancelado) await carregar(map);
+      setMapaReady(true);
+
+      // 5. Carrega zonas
+      if (!cancelado) await carregarZonas(map);
     }
 
-    inicializar().catch(console.error);
+    inicializar().catch(err => {
+      console.error('Erro ao inicializar mapa:', err);
+      setErro('Erro ao carregar o mapa. Recarregue a página.');
+      setLoadingZonas(false);
+    });
 
     return () => {
       cancelado = true;
@@ -102,13 +109,17 @@ export default function Zonas() {
     };
   }, []);
 
-  async function carregar(mapInstance) {
+  async function carregarZonas(mapInstance) {
     try {
       const { data } = await getZonas();
       setZonas(data);
       renderizarZonas(data, mapInstance || leafletRef.current);
-    } catch { setErro('Erro ao carregar zonas'); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error('Erro ao carregar zonas:', err);
+      setErro('Erro ao carregar zonas de entrega.');
+    } finally {
+      setLoadingZonas(false);
+    }
   }
 
   function renderizarZonas(lista, map) {
@@ -126,7 +137,8 @@ export default function Zonas() {
       }).addTo(map);
 
       poly.bindTooltip(
-        `<strong>${zona.nome}</strong><br>R$ ${parseFloat(zona.custo_entrega).toFixed(2)} · ${zona.prazo_dias} dia(s)`,
+        `<strong>${zona.nome}</strong><br>` +
+        `R$ ${parseFloat(zona.custo_entrega).toFixed(2)} · ${zona.prazo_dias} dia(s)`,
         { sticky: true }
       );
 
@@ -155,7 +167,7 @@ export default function Zonas() {
     function aoClicar(e) {
       const { lat, lng } = e.latlng;
       pontosTmpRef.current.push([lat, lng]);
-      setPontosCount(pontosTmpRef.current.length);
+      setPontosCount(c => c + 1);
 
       const marker = L.circleMarker([lat, lng], {
         radius: 5, color: zona.cor || '#3b82f6', fillOpacity: 1,
@@ -187,7 +199,6 @@ export default function Zonas() {
     setPontosCount(0);
 
     if (zonaDesenho) renderizarZonas(zonas, map);
-
     setModoDesenho(false);
     setZonaDesenho(null);
   }
@@ -211,7 +222,7 @@ export default function Zonas() {
       setPontosCount(0);
       setModoDesenho(false);
       setZonaDesenho(null);
-      await carregar();
+      await carregarZonas();
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao salvar polígono');
     } finally { setSalvando(false); }
@@ -222,7 +233,7 @@ export default function Zonas() {
     try {
       await api.delete(`/admin/zonas/${zona.id}/poligono`);
       feedback('Polígono removido.');
-      await carregar();
+      await carregarZonas();
     } catch { setErro('Erro ao remover polígono'); }
   }
 
@@ -263,7 +274,7 @@ export default function Zonas() {
       else                           await criarZona(dados);
       setModal(null);
       feedback('Zona salva!');
-      await carregar();
+      await carregarZonas();
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao salvar');
     } finally { setSalvando(false); }
@@ -276,7 +287,9 @@ export default function Zonas() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  if (loading) return <Spinner />;
+  // IMPORTANTE: não usar `if (loading) return <Spinner />` aqui.
+  // O div do mapa precisa estar no DOM antes do Leaflet inicializar.
+  // O spinner fica sobreposto ao container do mapa.
 
   return (
     <div className={styles.page}>
@@ -284,10 +297,13 @@ export default function Zonas() {
         <div>
           <h1 className={styles.title}>Zonas de entrega</h1>
           <p className={styles.subtitle}>
-            {zonas.length} zona(s) · desenhe polígonos no mapa ou use faixas de CEP como fallback
+            {loadingZonas
+              ? 'Carregando...'
+              : `${zonas.length} zona(s) · desenhe polígonos no mapa ou use faixas de CEP como fallback`
+            }
           </p>
         </div>
-        <Button onClick={abrirCriar}>+ Nova zona</Button>
+        <Button onClick={abrirCriar} disabled={loadingZonas}>+ Nova zona</Button>
       </div>
 
       {erro    && <Alert type="error">{erro}</Alert>}
@@ -311,52 +327,63 @@ export default function Zonas() {
       )}
 
       <div className={styles.layout}>
+        {/* Container do mapa — SEMPRE renderizado para o Leaflet encontrar o div */}
         <div className={styles.mapaWrap}>
           <div ref={mapRef} className={styles.mapa} />
+          {!mapaReady && (
+            <div className={styles.mapaOverlay}>
+              <Spinner />
+            </div>
+          )}
         </div>
 
+        {/* Painel lateral */}
         <div className={styles.painel}>
-          {zonas.map(zona => (
-            <Card key={zona.id} className={`${styles.zonaCard} ${zonaDesenho?.id === zona.id ? styles.zonaCardAtiva : ''}`}>
-              <div className={styles.zonaHeader}>
-                <div className={styles.zonaNomeWrap}>
-                  <span className={styles.zonaCorDot} style={{ background: zona.cor || '#3b82f6' }} />
-                  <span className={styles.zonaNome}>{zona.nome}</span>
-                  {!zona.ativa && <Badge color="gray">Inativa</Badge>}
-                </div>
-              </div>
-
-              <div className={styles.zonaInfo}>
-                <span>R$ {parseFloat(zona.custo_entrega).toFixed(2)}</span>
-                <span>{zona.prazo_dias} dia(s)</span>
-                <span className={styles.zonaCep}>{zona.cep_inicio}–{zona.cep_fim}</span>
-              </div>
-
-              <div className={styles.zonaStatus}>
-                {zona.poligono?.length
-                  ? <span className={styles.tagPoligono}>🗺️ Polígono ativo ({zona.poligono.length} pts)</span>
-                  : <span className={styles.tagCep}>📮 Usando faixa de CEP</span>
-                }
-              </div>
-
-              <div className={styles.zonaAcoes}>
-                {zona.poligono?.length &&
-                  <Button size="sm" variant="ghost" onClick={() => centralizarZona(zona)}>Ver no mapa</Button>
-                }
-                <Button size="sm" variant="secondary"
-                  onClick={() => iniciarDesenho(zona)} disabled={modoDesenho}>
-                  {zona.poligono?.length ? 'Redesenhar' : 'Desenhar'}
-                </Button>
-                {zona.poligono?.length &&
-                  <Button size="sm" variant="ghost" onClick={() => removerPoligono(zona)}>🗑 Polígono</Button>
-                }
-                <Button size="sm" variant="ghost" onClick={() => abrirEditar(zona)}>Editar</Button>
-              </div>
-            </Card>
-          ))}
-
-          {zonas.length === 0 && (
+          {loadingZonas ? (
+            <div className={styles.painelLoading}><Spinner /></div>
+          ) : zonas.length === 0 ? (
             <p className={styles.vazio}>Nenhuma zona cadastrada. Crie uma para começar.</p>
+          ) : (
+            zonas.map(zona => (
+              <Card key={zona.id} className={`${styles.zonaCard} ${zonaDesenho?.id === zona.id ? styles.zonaCardAtiva : ''}`}>
+                <div className={styles.zonaHeader}>
+                  <div className={styles.zonaNomeWrap}>
+                    <span className={styles.zonaCorDot} style={{ background: zona.cor || '#3b82f6' }} />
+                    <span className={styles.zonaNome}>{zona.nome}</span>
+                    {!zona.ativa && <Badge color="gray">Inativa</Badge>}
+                  </div>
+                </div>
+
+                <div className={styles.zonaInfo}>
+                  <span>R$ {parseFloat(zona.custo_entrega).toFixed(2)}</span>
+                  <span>{zona.prazo_dias} dia(s)</span>
+                  <span className={styles.zonaCep}>{zona.cep_inicio}–{zona.cep_fim}</span>
+                </div>
+
+                <div className={styles.zonaStatus}>
+                  {zona.poligono?.length
+                    ? <span className={styles.tagPoligono}>🗺️ Polígono ativo ({zona.poligono.length} pts)</span>
+                    : <span className={styles.tagCep}>📮 Usando faixa de CEP</span>
+                  }
+                </div>
+
+                <div className={styles.zonaAcoes}>
+                  {zona.poligono?.length
+                    ? <Button size="sm" variant="ghost" onClick={() => centralizarZona(zona)}>Ver no mapa</Button>
+                    : null
+                  }
+                  <Button size="sm" variant="secondary"
+                    onClick={() => iniciarDesenho(zona)} disabled={modoDesenho || !mapaReady}>
+                    {zona.poligono?.length ? 'Redesenhar' : 'Desenhar'}
+                  </Button>
+                  {zona.poligono?.length
+                    ? <Button size="sm" variant="ghost" onClick={() => removerPoligono(zona)}>🗑 Polígono</Button>
+                    : null
+                  }
+                  <Button size="sm" variant="ghost" onClick={() => abrirEditar(zona)}>Editar</Button>
+                </div>
+              </Card>
+            ))
           )}
         </div>
       </div>
