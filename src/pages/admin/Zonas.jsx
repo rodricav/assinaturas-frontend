@@ -1,11 +1,10 @@
 // src/pages/admin/Zonas.jsx
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getZonas, criarZona, editarZona } from '../../services/api';
 import api from '../../services/api';
 import { Card, Button, Input, Alert, Spinner, Modal, Badge } from '../../components/ui';
 import styles from './Zonas.module.css';
 
-// Cores padrão para novas zonas
 const CORES_PADRAO = [
   '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
   '#8b5cf6', '#06b6d4', '#f97316', '#84cc16',
@@ -17,59 +16,85 @@ const formVazio = {
 };
 
 export default function Zonas() {
-  const [zonas, setZonas]           = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [erro, setErro]             = useState('');
-  const [sucesso, setSucesso]       = useState('');
-  const [modal, setModal]           = useState(null); // 'criar' | 'editar'
-  const [sel, setSel]               = useState(null);
-  const [form, setForm]             = useState(formVazio);
-  const [salvando, setSalvando]     = useState(false);
-  const [zonaDesenho, setZonaDesenho] = useState(null); // zona sendo desenhada
-  const [modoDesenho, setModoDesenho] = useState(false);
+  const [zonas, setZonas]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [erro, setErro]                 = useState('');
+  const [sucesso, setSucesso]           = useState('');
+  const [modal, setModal]               = useState(null);
+  const [sel, setSel]                   = useState(null);
+  const [form, setForm]                 = useState(formVazio);
+  const [salvando, setSalvando]         = useState(false);
+  const [zonaDesenho, setZonaDesenho]   = useState(null);
+  const [modoDesenho, setModoDesenho]   = useState(false);
+  const [pontosCount, setPontosCount]   = useState(0); // para forçar re-render do contador
 
-  const mapRef      = useRef(null);
-  const leafletRef  = useRef(null); // instância do mapa Leaflet
-  const camadasRef  = useRef({});   // { zonaId: L.Polygon }
-  const pontosTmpRef = useRef([]);  // pontos do polígono em desenho
-  const marcadoresTmpRef = useRef([]); // marcadores temporários
-  const linhaTmpRef = useRef(null); // polyline temporária
+  const mapRef           = useRef(null);
+  const leafletRef       = useRef(null);
+  const camadasRef       = useRef({});
+  const pontosTmpRef     = useRef([]);
+  const marcadoresTmpRef = useRef([]);
+  const linhaTmpRef      = useRef(null);
 
-  // ── Carrega Leaflet dinamicamente ────────────────────────────────────────────
+  // ── Carrega Leaflet e inicializa mapa ────────────────────────────────────────
   useEffect(() => {
-    async function init() {
-      if (!window.L) {
-        // Injeta CSS do Leaflet
+    let cancelado = false;
+
+    async function inicializar() {
+      // Injeta CSS (idempotente)
+      if (!document.querySelector('link[href*="leaflet.min.css"]')) {
         const link = document.createElement('link');
         link.rel  = 'stylesheet';
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
         document.head.appendChild(link);
+      }
 
-        // Injeta JS do Leaflet
+      // Injeta JS se ainda não carregado
+      if (!window.L) {
         await new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-          script.onload  = resolve;
-          script.onerror = reject;
+          if (document.querySelector('script[src*="leaflet.min.js"]')) {
+            // Script já injetado — aguarda window.L ficar disponível
+            const poll = setInterval(() => {
+              if (window.L) { clearInterval(poll); resolve(); }
+            }, 50);
+            return;
+          }
+          const script    = document.createElement('script');
+          script.src      = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+          script.onload   = resolve;
+          script.onerror  = reject;
           document.head.appendChild(script);
         });
       }
 
-      const L = window.L;
-      if (leafletRef.current) return; // já inicializado
+      if (cancelado) return;
 
-      const map = L.map(mapRef.current, { zoomControl: true }).setView([-22.5, -47.4], 10);
+      // Aguarda o container estar no DOM (React Strict Mode pode chamar
+      // o effect antes do paint; requestAnimationFrame resolve isso)
+      if (!mapRef.current) {
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      }
+      if (cancelado || !mapRef.current) return;
+
+      // Evita double-init
+      if (leafletRef.current) return;
+
+      const L   = window.L;
+      const map = L.map(mapRef.current, { zoomControl: true })
+                   .setView([-22.5, -47.4], 10);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
 
       leafletRef.current = map;
-      await carregar(map);
+      if (!cancelado) await carregar(map);
     }
 
-    init().catch(console.error);
+    inicializar().catch(console.error);
+
     return () => {
+      cancelado = true;
       if (leafletRef.current) {
         leafletRef.current.remove();
         leafletRef.current = null;
@@ -87,21 +112,17 @@ export default function Zonas() {
   }
 
   function renderizarZonas(lista, map) {
-    if (!map) return;
+    if (!map || !window.L) return;
     const L = window.L;
 
-    // Remove camadas antigas
     Object.values(camadasRef.current).forEach(c => map.removeLayer(c));
     camadasRef.current = {};
 
     lista.forEach(zona => {
       if (!zona.poligono?.length) return;
-      const cor = zona.cor || '#3b82f6';
+      const cor  = zona.cor || '#3b82f6';
       const poly = L.polygon(zona.poligono, {
-        color:       cor,
-        fillColor:   cor,
-        fillOpacity: 0.25,
-        weight:      2,
+        color: cor, fillColor: cor, fillOpacity: 0.25, weight: 2,
       }).addTo(map);
 
       poly.bindTooltip(
@@ -116,14 +137,14 @@ export default function Zonas() {
   // ── Modo desenho ─────────────────────────────────────────────────────────────
   function iniciarDesenho(zona) {
     const map = leafletRef.current;
-    if (!map) return;
+    if (!map || !window.L) return;
     const L = window.L;
 
     setZonaDesenho(zona);
     setModoDesenho(true);
     pontosTmpRef.current = [];
+    setPontosCount(0);
 
-    // Remove polígono existente da zona, se houver
     if (camadasRef.current[zona.id]) {
       map.removeLayer(camadasRef.current[zona.id]);
       delete camadasRef.current[zona.id];
@@ -134,14 +155,13 @@ export default function Zonas() {
     function aoClicar(e) {
       const { lat, lng } = e.latlng;
       pontosTmpRef.current.push([lat, lng]);
+      setPontosCount(pontosTmpRef.current.length);
 
-      // Marcador no ponto
       const marker = L.circleMarker([lat, lng], {
         radius: 5, color: zona.cor || '#3b82f6', fillOpacity: 1,
       }).addTo(map);
       marcadoresTmpRef.current.push(marker);
 
-      // Atualiza linha prévia
       if (linhaTmpRef.current) map.removeLayer(linhaTmpRef.current);
       if (pontosTmpRef.current.length > 1) {
         linhaTmpRef.current = L.polyline(pontosTmpRef.current, {
@@ -160,18 +180,13 @@ export default function Zonas() {
 
     map.off('click', map._desenhoClick);
     map.getContainer().style.cursor = '';
-
-    // Limpa marcadores e linha temporários
     marcadoresTmpRef.current.forEach(m => map.removeLayer(m));
     marcadoresTmpRef.current = [];
     if (linhaTmpRef.current) { map.removeLayer(linhaTmpRef.current); linhaTmpRef.current = null; }
     pontosTmpRef.current = [];
+    setPontosCount(0);
 
-    // Rerenderiza polígono original da zona
-    if (zonaDesenho) {
-      const original = zonas.find(z => z.id === zonaDesenho.id);
-      if (original?.poligono?.length) renderizarZonas(zonas, map);
-    }
+    if (zonaDesenho) renderizarZonas(zonas, map);
 
     setModoDesenho(false);
     setZonaDesenho(null);
@@ -179,10 +194,7 @@ export default function Zonas() {
 
   async function confirmarDesenho() {
     const pontos = pontosTmpRef.current;
-    if (pontos.length < 3) {
-      setErro('Clique ao menos 3 pontos para formar um polígono.');
-      return;
-    }
+    if (pontos.length < 3) { setErro('Clique ao menos 3 pontos no mapa.'); return; }
 
     const map = leafletRef.current;
     map.off('click', map._desenhoClick);
@@ -196,6 +208,7 @@ export default function Zonas() {
       await api.patch(`/admin/zonas/${zonaDesenho.id}/poligono`, { poligono: pontos });
       feedback('Polígono salvo!');
       pontosTmpRef.current = [];
+      setPontosCount(0);
       setModoDesenho(false);
       setZonaDesenho(null);
       await carregar();
@@ -214,10 +227,9 @@ export default function Zonas() {
   }
 
   function centralizarZona(zona) {
-    const map = leafletRef.current;
-    if (!map || !zona.poligono?.length) return;
+    const map  = leafletRef.current;
     const poly = camadasRef.current[zona.id];
-    if (poly) map.fitBounds(poly.getBounds(), { padding: [40, 40] });
+    if (map && poly) map.fitBounds(poly.getBounds(), { padding: [40, 40] });
   }
 
   // ── Modal criar / editar ──────────────────────────────────────────────────────
@@ -229,12 +241,9 @@ export default function Zonas() {
 
   function abrirEditar(zona) {
     setForm({
-      nome:          zona.nome,
-      cep_inicio:    zona.cep_inicio,
-      cep_fim:       zona.cep_fim,
-      custo_entrega: zona.custo_entrega,
-      prazo_dias:    zona.prazo_dias,
-      cor:           zona.cor || '#3b82f6',
+      nome: zona.nome, cep_inicio: zona.cep_inicio, cep_fim: zona.cep_fim,
+      custo_entrega: zona.custo_entrega, prazo_dias: zona.prazo_dias,
+      cor: zona.cor || '#3b82f6',
     });
     setSel(zona); setErro(''); setModal('editar');
   }
@@ -250,11 +259,8 @@ export default function Zonas() {
         prazo_dias:    parseInt(form.prazo_dias),
         cor:           form.cor,
       };
-      if (modal === 'editar' && sel) {
-        await editarZona(sel.id, dados);
-      } else {
-        await criarZona(dados);
-      }
+      if (modal === 'editar' && sel) await editarZona(sel.id, dados);
+      else                           await criarZona(dados);
       setModal(null);
       feedback('Zona salva!');
       await carregar();
@@ -291,7 +297,7 @@ export default function Zonas() {
         <div className={styles.bannerDesenho}>
           <span>
             ✏️ Desenhando <strong>{zonaDesenho?.nome}</strong> —
-            clique no mapa para adicionar pontos ({pontosTmpRef.current.length} ponto(s))
+            clique no mapa para adicionar pontos ({pontosCount} ponto(s))
           </span>
           <div className={styles.bannerAcoes}>
             <Button size="sm" onClick={confirmarDesenho} loading={salvando}>
@@ -305,21 +311,16 @@ export default function Zonas() {
       )}
 
       <div className={styles.layout}>
-        {/* Mapa */}
         <div className={styles.mapaWrap}>
           <div ref={mapRef} className={styles.mapa} />
         </div>
 
-        {/* Painel lateral */}
         <div className={styles.painel}>
           {zonas.map(zona => (
             <Card key={zona.id} className={`${styles.zonaCard} ${zonaDesenho?.id === zona.id ? styles.zonaCardAtiva : ''}`}>
               <div className={styles.zonaHeader}>
                 <div className={styles.zonaNomeWrap}>
-                  <span
-                    className={styles.zonaCorDot}
-                    style={{ background: zona.cor || '#3b82f6' }}
-                  />
+                  <span className={styles.zonaCorDot} style={{ background: zona.cor || '#3b82f6' }} />
                   <span className={styles.zonaNome}>{zona.nome}</span>
                   {!zona.ativa && <Badge color="gray">Inativa</Badge>}
                 </div>
@@ -328,9 +329,7 @@ export default function Zonas() {
               <div className={styles.zonaInfo}>
                 <span>R$ {parseFloat(zona.custo_entrega).toFixed(2)}</span>
                 <span>{zona.prazo_dias} dia(s)</span>
-                <span className={styles.zonaCep}>
-                  {zona.cep_inicio}–{zona.cep_fim}
-                </span>
+                <span className={styles.zonaCep}>{zona.cep_inicio}–{zona.cep_fim}</span>
               </div>
 
               <div className={styles.zonaStatus}>
@@ -341,21 +340,15 @@ export default function Zonas() {
               </div>
 
               <div className={styles.zonaAcoes}>
-                {zona.poligono?.length
-                  ? <Button size="sm" variant="ghost" onClick={() => centralizarZona(zona)}>Ver no mapa</Button>
-                  : null
+                {zona.poligono?.length &&
+                  <Button size="sm" variant="ghost" onClick={() => centralizarZona(zona)}>Ver no mapa</Button>
                 }
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => iniciarDesenho(zona)}
-                  disabled={modoDesenho}
-                >
+                <Button size="sm" variant="secondary"
+                  onClick={() => iniciarDesenho(zona)} disabled={modoDesenho}>
                   {zona.poligono?.length ? 'Redesenhar' : 'Desenhar'}
                 </Button>
-                {zona.poligono?.length
-                  ? <Button size="sm" variant="ghost" onClick={() => removerPoligono(zona)}>🗑 Polígono</Button>
-                  : null
+                {zona.poligono?.length &&
+                  <Button size="sm" variant="ghost" onClick={() => removerPoligono(zona)}>🗑 Polígono</Button>
                 }
                 <Button size="sm" variant="ghost" onClick={() => abrirEditar(zona)}>Editar</Button>
               </div>
@@ -368,12 +361,8 @@ export default function Zonas() {
         </div>
       </div>
 
-      {/* Modal criar/editar */}
-      <Modal
-        open={!!modal}
-        onClose={() => setModal(null)}
-        title={modal === 'editar' ? `Editar — ${sel?.nome}` : 'Nova zona'}
-      >
+      <Modal open={!!modal} onClose={() => setModal(null)}
+        title={modal === 'editar' ? `Editar — ${sel?.nome}` : 'Nova zona'}>
         <form onSubmit={salvar} className={styles.form}>
           {erro && <Alert type="error">{erro}</Alert>}
 
