@@ -203,7 +203,6 @@ export default function Produtos() {
               <div className={styles.estoque}>
                 <span className={styles.estoqueNum}>{p.estoque_atual}</span>
                 <span className={styles.estoqueLabel}>em estoque</span>
-                {p.estoque_atual <= p.estoque_minimo && <Badge color="red">Baixo</Badge>}
               </div>
               <div className={styles.cardActions}>
                 <Button size="sm" variant="ghost" onClick={() => abrirEditar(p)}>Editar</Button>
@@ -351,9 +350,6 @@ export default function Produtos() {
                           {p.avulso && <Badge color="gray">Avulso</Badge>}
                         </div>
                         <span className={styles.pedidoCliente}>👤 {p.cliente_nome}</span>
-                        {p.cliente_telefone && (
-                          <span className={styles.pedidoTel}>📱 {p.cliente_telefone}</span>
-                        )}
                         <div className={styles.pedidoMeta}>
                           <span>Qtd: <strong>{p.quantidade}</strong></span>
                           {p.data_entrega_prevista && (
