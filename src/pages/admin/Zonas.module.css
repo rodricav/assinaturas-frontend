@@ -28,6 +28,7 @@
 }
 
 .mapaWrap {
+  position: relative;
   border-radius: var(--radius);
   overflow: hidden;
   border: 1.5px solid var(--border);
@@ -86,4 +87,23 @@
   .layout { grid-template-columns: 1fr; }
   .mapaWrap { position: static; }
   .mapa { height: 400px; }
+}
+
+/* Spinner sobreposto enquanto o mapa carrega */
+.mapaOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  z-index: 1000;
+  border-radius: var(--radius);
+}
+
+.painelLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
 }
