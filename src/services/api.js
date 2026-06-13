@@ -63,6 +63,7 @@ export const editarZona          = (id, data) => api.patch(`/admin/zonas/${id}`,
 export const getAssinantes       = ()         => api.get('/admin/assinantes');
 export const getAssinaturasAdmin = (params)   => api.get('/admin/assinaturas', { params });
 export const rodarScheduler      = ()         => api.post('/admin/dev/rodar-scheduler');
+export const getIntegracoes      = ()         => api.get('/admin/integracoes');
 
 export default api;
 
