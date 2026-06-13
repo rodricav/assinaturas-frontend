@@ -198,6 +198,7 @@ export default function Pedidos() {
   const [obs, setObs]               = useState('');
   const [acao, setAcao]             = useState(false);
   const [erro, setErro]             = useState('');
+  const [emitindoNfce, setEmitindoNfce] = useState(null); // pedido_id sendo emitido
   const { config } = useConfig();
   const navigate = useNavigate();
 
@@ -232,6 +233,22 @@ export default function Pedidos() {
       imprimirPedido(data, config);
     } catch {
       imprimirPedido(p, config);
+    }
+  }
+
+  async function emitirNfce(p) {
+    setEmitindoNfce(p.id);
+    setErro('');
+    try {
+      const { data } = await api.post(`/pedidos/${p.id}/nfce`);
+      // Abre o DANFE em nova aba
+      window.open(data.danfe_url, '_blank');
+      // Atualiza a lista para refletir nfe_pdf_url
+      await carregar();
+    } catch (err) {
+      setErro(err.response?.data?.erro || 'Erro ao emitir NFC-e');
+    } finally {
+      setEmitindoNfce(null);
     }
   }
 
@@ -331,6 +348,18 @@ export default function Pedidos() {
                 <Button size="sm" variant="ghost" onClick={() => handleImprimir(p)}>
                   🖨️ Imprimir
                 </Button>
+                {['confirmado','em_separacao','saiu_para_entrega','entregue'].includes(p.status) && (
+                  p.nfe_pdf_url
+                    ? <Button size="sm" variant="ghost"
+                        onClick={() => window.open(p.nfe_pdf_url, '_blank')}>
+                        🧾 NFC-e
+                      </Button>
+                    : <Button size="sm" variant="ghost"
+                        loading={emitindoNfce === p.id}
+                        onClick={() => emitirNfce(p)}>
+                        🧾 Emitir NFC-e
+                      </Button>
+                )}
                 {podeEditar && (
                   <Button size="sm" variant="ghost" onClick={() => navigate(`/painel/pedidos/${p.id}/editar`)}>
                     ✏️ Editar
