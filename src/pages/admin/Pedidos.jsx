@@ -1,7 +1,7 @@
 // src/pages/admin/Pedidos.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPedidos, avancarEstagio } from '../../services/api';
+import { getPedidos, avancarEstagio, getIntegracoes } from '../../services/api';
 import api from '../../services/api';
 import { useConfig } from '../../context/ConfigContext';
 import { Card, Badge, Button, Spinner, Alert, Modal } from '../../components/ui';
@@ -199,6 +199,7 @@ export default function Pedidos() {
   const [acao, setAcao]             = useState(false);
   const [erro, setErro]             = useState('');
   const [emitindoNfce, setEmitindoNfce] = useState(null); // pedido_id sendo emitido
+  const [integracoes, setIntegracoes]   = useState({ nfce_ativo: false });
   const { config } = useConfig();
   const navigate = useNavigate();
 
@@ -213,6 +214,13 @@ export default function Pedidos() {
     } catch { setErro('Erro ao carregar pedidos'); }
     finally { setLoading(false); }
   }
+
+  // Carrega flags de integração uma vez ao montar
+  useEffect(() => {
+    getIntegracoes()
+      .then(r => setIntegracoes(r.data))
+      .catch(() => {}); // silencioso — mantém nfce: false
+  }, []);
 
   useEffect(() => { carregar(); }, [filtro, dataInicio, dataFim]);
 
@@ -348,7 +356,7 @@ export default function Pedidos() {
                 <Button size="sm" variant="ghost" onClick={() => handleImprimir(p)}>
                   🖨️ Imprimir
                 </Button>
-                {['confirmado','em_separacao','saiu_para_entrega','entregue'].includes(p.status) && (
+                {integracoes.nfce_ativo && ['confirmado','em_separacao','saiu_para_entrega','entregue'].includes(p.status) && (
                   p.nfe_pdf_url
                     ? <Button size="sm" variant="ghost"
                         onClick={() => window.open(p.nfe_pdf_url, '_blank')}>
